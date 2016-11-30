@@ -1,6 +1,6 @@
 (* Compile commande : ocamlc -o traffic.out str.cma traffic.ml *)
 
-
+(*Alexis*)
 type position = {
   x : int;
   y : int;
