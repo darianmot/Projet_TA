@@ -17,45 +17,106 @@ type flight = {
   typ : flight_type;
   callsign : string;
   size : size;
+  parking : string;
   runway : string;
+  t_debut : int;
+  t_rwy : int;
+  t_cfmu : int;
   traj : string list;
 };;
 (* Type vol *)
 
-let newFlight typ callsign size runway traj =
+let newFlight typ callsign size parking runway t_debut t_rwy t_cfmu traj =
   {typ = typ;
    callsign = callsign;
    size = size;
+   parking = parking;
    runway = runway;
+   t_debut = t_debut;
+   t_rwy = t_rwy;
+   t_cfmu = t_cfmu;
    traj = traj};;
 (* Enregistre un nouveau vol *)
 
+(*Debut acesseurs des attributs d'un vol*)
+let get_typ flight = flight.typ;;
+let get_callsign flight = flight.callsign;;
+let get_size flight = flight.size;;
+let get_parking flight = flight.parking;;
+let get_runway flight = flight.runway;;
+let get_t_debut flight = flight.t_debut;;
+let get_t_rwy flight = flight.t_rwy;;
+let get_t_cfmu flight = flight.t_cfmu;;
+let get_traj flight = flight.traj;;
+(*Fin acesseurs des attributs d'un vol*)
 
 let rec print_traffic l =
   match l with
   |[] -> Printf.printf ""
-  |f::q -> begin Printf.printf "%s\n" f.callsign; print_traffic q end;;
+  |f::q -> begin
+    let typ = if (get_typ f) = DEP then "DEP" else if  (get_typ f) = ARR then "ARR" else "???" in  Printf.printf "%s " typ;
+    Printf.printf "%s " (get_callsign f);
+    let size = if (get_size f) = L then "L" else if  (get_size f) = M then "M" else "H" in  Printf.printf "%s " size;
+    Printf.printf "%s " (get_parking f);
+    Printf.printf "%s " (get_runway f);
+    Printf.printf "%d " (get_t_debut f);
+    Printf.printf "%d " (get_t_rwy f);
+    Printf.printf "%d\n" (get_t_cfmu f);
+    print_traffic q end;;
 (* Printf de la liste des vols passés en parametre *)
 
 
 let read filename =
-  let list = ref []
-  in let channel = open_in filename in
-    while true do  
+  let channel = open_in filename
+  in let list = ref [] in
      try
+    while true do  
       let line = input_line channel in 
       match Str.split (Str.regexp " ") (line) with
-      |typ_s::callsign::size_s::runway::traj ->
-          let typ = if typ_s == "dep" then DEP else ARR
-          in let size = if size_s == "L" then L else if size_s == "M" then M else H 
-          in let f = newFlight typ callsign size runway traj
-          in list := [f]@(!list)
-      |_ -> () ;
-     with End_of_file -> close_in channel
-   done;
-   !list
-;;
-
+      |typ_s::callsign::size_s::parking::runway::t_debuts::t_rwys::t_cfmus::traj -> 
+       let typ = if typ_s = "ARR" then ARR else DEP
+       in let size = if size_s = "L" then L else if size_s = "M" then M else H
+       in let t_debut = int_of_string t_debuts
+       in let t_rwy =  int_of_string t_rwys
+       in let t_cfmu =  if t_cfmus = "_" then -1 else int_of_string t_cfmus
+       in let f = newFlight  typ callsign size parking runway t_debut t_rwy t_cfmu traj
+       in list := [f]@(!list)
+      |_ -> ()
+    done;
+    !list;
+     with End_of_file -> close_in channel;
+       !list ;;
 (* Renvoie une liste de flight contenu dans un fichier *)
 
+
+let read_rec filename =
+  let channel = open_in filename in
+  let res = ref [] in
+  let rec read_line acc =
+    match Str.split (Str.regexp " ") (input_line channel) with
+    |typ_s::callsign::size_s::parking::runway::t_debuts::t_rwys::t_cfmus::traj -> 
+       let typ = if typ_s ="DEP" then DEP else ARR 
+       in let size = if size_s = "L" then L else if size_s == "M" then M else H
+       in let t_debut = int_of_string t_debuts
+       in let t_rwy =  int_of_string t_rwys
+       in let t_cfmu =  if t_cfmus = "_" then -1 else int_of_string t_cfmus
+       in let f = newFlight  typ callsign size parking runway t_debut t_rwy t_cfmu traj
+       in read_line (f::acc);
+    |_ -> read_line acc
+    |exception End_of_file -> res := acc
+  in read_line [];
+  close_in channel;
+  !res;;
+(* Renvoie une liste de flight contenu dans un fichier VERSION RECUSIVE *)
+
+
+let t_read1 = Sys.time ();; 
 print_traffic (read "data/lfpg_flights.txt");;
+let t_read2 = Sys.time ();;
+let t_read_rec1 = Sys.time ();; 
+print_traffic (read_rec "data/lfpg_flights.txt");;
+let t_read_rec2 = Sys.time ();;
+Printf.printf "\n\nread : %f\n" (t_read2 -. t_read1);;
+Printf.printf "\n\nread_rec : %f\n" (t_read_rec2 -. t_read_rec1);;
+
+                                
