@@ -1,6 +1,6 @@
 (* Compile commande : ocamlc -o traffic.out str.cma traffic.ml *)
 
-(*Alexis*)
+
 type position = {
   x : int;
   y : int;
@@ -39,17 +39,23 @@ let rec print_traffic l =
 
 
 let read filename =
-  let channel = open_in filename in
-  let rec read_line acc =
-    match Str.split (Str.regexp " ") (input_line channel) with
-    |typ_s::callsign::size_s::runway::traj ->
-       let typ = if typ_s == "dep" then DEP else ARR
-       in let size = if size_s == "L" then L else if size_s == "M" then M else H 
-       in let f = newFlight typ callsign size runway traj
-       in read_line (f::acc);
-    |l -> read_line acc
-    |exception End_of_file -> acc
-  in read_line [];;
+  let list = ref []
+  in let channel = open_in filename in
+    while true do  
+     try
+      let line = input_line channel in 
+      match Str.split (Str.regexp " ") (line) with
+      |typ_s::callsign::size_s::runway::traj ->
+          let typ = if typ_s == "dep" then DEP else ARR
+          in let size = if size_s == "L" then L else if size_s == "M" then M else H 
+          in let f = newFlight typ callsign size runway traj
+          in list := [f]@(!list)
+      |_ -> () ;
+     with End_of_file -> close_in channel
+   done;
+   !list
+;;
+
 (* Renvoie une liste de flight contenu dans un fichier *)
 
 print_traffic (read "data/lfpg_flights.txt");;
