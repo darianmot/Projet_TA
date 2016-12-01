@@ -1,5 +1,6 @@
 (* Compile commande : ocamlc -o traffic.out str.cma traffic.ml *)
 
+let _file = "data/lfpg_flights.txt";;
 
 type position = {
   x : int;
@@ -80,43 +81,15 @@ let read filename =
        in let t_rwy =  int_of_string t_rwys
        in let t_cfmu =  if t_cfmus = "_" then -1 else int_of_string t_cfmus
        in let f = newFlight  typ callsign size parking runway t_debut t_rwy t_cfmu traj
-       in list := [f]@(!list)
+       in list := f::!list
       |_ -> ()
     done;
     !list;
      with End_of_file -> close_in channel;
-       !list ;;
+       List.rev !list ;;
 (* Renvoie une liste de flight contenu dans un fichier *)
 
 
-let read_rec filename =
-  let channel = open_in filename in
-  let res = ref [] in
-  let rec read_line acc =
-    match Str.split (Str.regexp " ") (input_line channel) with
-    |typ_s::callsign::size_s::parking::runway::t_debuts::t_rwys::t_cfmus::traj -> 
-       let typ = if typ_s ="DEP" then DEP else ARR 
-       in let size = if size_s = "L" then L else if size_s == "M" then M else H
-       in let t_debut = int_of_string t_debuts
-       in let t_rwy =  int_of_string t_rwys
-       in let t_cfmu =  if t_cfmus = "_" then -1 else int_of_string t_cfmus
-       in let f = newFlight  typ callsign size parking runway t_debut t_rwy t_cfmu traj
-       in read_line (f::acc);
-    |_ -> read_line acc
-    |exception End_of_file -> res := acc
-  in read_line [];
-  close_in channel;
-  !res;;
-(* Renvoie une liste de flight contenu dans un fichier VERSION RECUSIVE *)
-
-
-let t_read1 = Sys.time ();; 
-print_traffic (read "data/lfpg_flights.txt");;
-let t_read2 = Sys.time ();;
-let t_read_rec1 = Sys.time ();; 
-print_traffic (read_rec "data/lfpg_flights.txt");;
-let t_read_rec2 = Sys.time ();;
-Printf.printf "\n\nread : %f\n" (t_read2 -. t_read1);;
-Printf.printf "\n\nread_rec : %f\n" (t_read_rec2 -. t_read_rec1);;
-
                                 
+let load () = read _file;;
+(* Charge la liste des vols du fichier _file (global) *)
