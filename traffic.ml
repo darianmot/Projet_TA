@@ -23,9 +23,14 @@ type flight = {
   t_debut : int;
   t_rwy : int;
   t_cfmu : int;
-  traj : string list;
+  traj : position list;
 };;
 (* Type vol *)
+
+let newPosition x y =
+  {x = x;
+   y = y};;
+(* Enregistre une nouvelle position *)
 
 let newFlight typ callsign size parking runway t_debut t_rwy t_cfmu traj =
   {typ = typ;
@@ -62,9 +67,10 @@ let rec print_traffic l =
     Printf.printf "%s " (get_runway f);
     Printf.printf "%d " (get_t_debut f);
     Printf.printf "%d " (get_t_rwy f);
-    Printf.printf "%d\n" (get_t_cfmu f);
+    Printf.printf "%d " (get_t_cfmu f);
+    let pos1 =  List.hd (get_traj f) in Printf.printf "(%d, %d)\n" pos1.x pos1.y;
     print_traffic q end;;
-(* Printf de la liste des vols passés en parametre *)
+(* Printf de la liste des vols passés en parametre (premiere position uniquement) *)
 
 
 let read filename =
@@ -73,13 +79,18 @@ let read filename =
      try
     while true do  
       let line = input_line channel in 
-      match Str.split (Str.regexp " ") (line) with
-      |typ_s::callsign::size_s::parking::runway::t_debuts::t_rwys::t_cfmus::traj -> 
+      match Str.split (Str.regexp " ") line with
+      |typ_s::callsign::size_s::parking::runway::t_debuts::t_rwys::t_cfmus::trajs -> 
        let typ = if typ_s = "ARR" then ARR else DEP
        in let size = if size_s = "L" then L else if size_s = "M" then M else H
        in let t_debut = int_of_string t_debuts
        in let t_rwy =  int_of_string t_rwys
        in let t_cfmu =  if t_cfmus = "_" then -1 else int_of_string t_cfmus
+       in let string_to_pos chaine = let l = Str.split (Str.regexp ",") chaine
+                                        in let x = int_of_string (List.hd l)
+                                        in let y = int_of_string (List.hd (List.tl l))
+                                        in newPosition x y
+       in let traj = List.map string_to_pos trajs
        in let f = newFlight  typ callsign size parking runway t_debut t_rwy t_cfmu traj
        in list := f::!list
       |_ -> ()
@@ -93,3 +104,5 @@ let read filename =
                                 
 let load () = read _file;;
 (* Charge la liste des vols du fichier _file (global) *)
+
+print_traffic (load ());;
