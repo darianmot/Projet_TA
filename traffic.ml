@@ -14,6 +14,11 @@ type size = L | M | H;;
 type flight_type = DEP | ARR;;
 (* Type depart ou arrivee *)
 
+type cfmu =
+  |None
+  |Tcfmu of int;;
+(* Type creneau cfmu (valable que pour certains departs) *)
+
 type flight = {
   typ : flight_type;
   callsign : string;
@@ -22,7 +27,7 @@ type flight = {
   runway : string;
   t_debut : int;
   t_rwy : int;
-  t_cfmu : int;
+  t_cfmu : cfmu;
   traj : position list;
 };;
 (* Type vol *)
@@ -67,7 +72,10 @@ let rec print_traffic l =
     Printf.printf "%s " (get_runway f);
     Printf.printf "%d " (get_t_debut f);
     Printf.printf "%d " (get_t_rwy f);
-    Printf.printf "%d " (get_t_cfmu f);
+    let cfmu = match get_t_cfmu f with
+      |None -> "_"
+      |Tcfmu t -> string_of_int t
+         in Printf.printf "%s " cfmu;
     let pos1 =  List.hd (get_traj f) in Printf.printf "(%d, %d)\n" pos1.x pos1.y;
     print_traffic q end;;
 (* Printf de la liste des vols passés en parametre (premiere position uniquement) *)
@@ -85,7 +93,7 @@ let read filename =
        in let size = if size_s = "L" then L else if size_s = "M" then M else H
        in let t_debut = int_of_string t_debuts
        in let t_rwy =  int_of_string t_rwys
-       in let t_cfmu =  if t_cfmus = "_" then -1 else int_of_string t_cfmus
+       in let t_cfmu =  if t_cfmus = "_" then None else  Tcfmu (int_of_string t_cfmus)
        in let string_to_pos chaine = let l = Str.split (Str.regexp ",") chaine
                                         in let x = int_of_string (List.hd l)
                                         in let y = int_of_string (List.hd (List.tl l))
