@@ -11,13 +11,22 @@ type position = {
 type size = L | M | H;;
 (*Type categorie d'avion *)
 
+let size_of_string s = if s = "L" then L else if s = "M" then M else H;;
+(* Associe un caractere à une chaine *)
+
 type flight_type = DEP | ARR;;
 (* Type depart ou arrivee *)
+
+let flight_type_of_string s = if s = "ARR" then ARR else DEP;;
+(* Associe une chaine a un type de vol *)
 
 type cfmu =
   |None
   |Tcfmu of int;;
 (* Type creneau cfmu (valable que pour certains departs) *)
+
+let cfmu_of_string s = if s = "_" then None else Tcfmu (int_of_string s);;
+(* Associe à une chaine un cfmu *)
 
 type flight = {
   typ : flight_type;
@@ -49,34 +58,41 @@ let newFlight typ callsign size parking runway t_debut t_rwy t_cfmu traj =
    traj = traj};;
 (* Enregistre un nouveau vol *)
 
+let pos_of_string chaine =
+  let l = Str.split (Str.regexp ",") chaine
+  in let x = int_of_string (List.hd l)
+     in let y = int_of_string (List.hd (List.tl l))
+        in newPosition x y;;
+(*Convertie un string "x,y" en une instance position*)
+
 (*Debut acesseurs des attributs d'un vol*)
-let get_typ flight = flight.typ;;
-let get_callsign flight = flight.callsign;;
-let get_size flight = flight.size;;
-let get_parking flight = flight.parking;;
-let get_runway flight = flight.runway;;
-let get_t_debut flight = flight.t_debut;;
-let get_t_rwy flight = flight.t_rwy;;
-let get_t_cfmu flight = flight.t_cfmu;;
-let get_traj flight = flight.traj;;
+let getTyp flight = flight.typ;;
+let getCallsign flight = flight.callsign;;
+let getSize flight = flight.size;;
+let getParking flight = flight.parking;;
+let getRunway flight = flight.runway;;
+let getT_debut flight = flight.t_debut;;
+let getT_rwy flight = flight.t_rwy;;
+let getT_cfmu flight = flight.t_cfmu;;
+let getTraj flight = flight.traj;;
 (*Fin acesseurs des attributs d'un vol*)
 
 let rec print_traffic l =
   match l with
   |[] -> Printf.printf ""
   |f::q -> begin
-    let typ = if (get_typ f) = DEP then "DEP" else if  (get_typ f) = ARR then "ARR" else "???" in  Printf.printf "%s " typ;
-    Printf.printf "%s " (get_callsign f);
-    let size = if (get_size f) = L then "L" else if  (get_size f) = M then "M" else "H" in  Printf.printf "%s " size;
-    Printf.printf "%s " (get_parking f);
-    Printf.printf "%s " (get_runway f);
-    Printf.printf "%d " (get_t_debut f);
-    Printf.printf "%d " (get_t_rwy f);
-    let cfmu = match get_t_cfmu f with
+    let typ = if (getTyp f) = DEP then "DEP" else if  (getTyp f) = ARR then "ARR" else "???" in  Printf.printf "%s " typ;
+    Printf.printf "%s " (getCallsign f);
+    let size = if (getSize f) = L then "L" else if  (getSize f) = M then "M" else "H" in  Printf.printf "%s " size;
+    Printf.printf "%s " (getParking f);
+    Printf.printf "%s " (getRunway f);
+    Printf.printf "%d " (getT_debut f);
+    Printf.printf "%d " (getT_rwy f);
+    let cfmu = match getT_cfmu f with
       |None -> "_"
       |Tcfmu t -> string_of_int t
          in Printf.printf "%s " cfmu;
-    let pos1 =  List.hd (get_traj f) in Printf.printf "(%d, %d)\n" pos1.x pos1.y;
+    let pos1 =  List.hd (getTraj f) in Printf.printf "(%d, %d)\n" pos1.x pos1.y;
     print_traffic q end;;
 (* Printf de la liste des vols passés en parametre (premiere position uniquement) *)
 
@@ -89,18 +105,14 @@ let read filename =
       let line = input_line channel in 
       match Str.split (Str.regexp " ") line with
       |typ_s::callsign::size_s::parking::runway::t_debuts::t_rwys::t_cfmus::trajs -> 
-       let typ = if typ_s = "ARR" then ARR else DEP
-       in let size = if size_s = "L" then L else if size_s = "M" then M else H
+       let typ = flight_type_of_string typ_s
+       in let size = size_of_string size_s 
        in let t_debut = int_of_string t_debuts
        in let t_rwy =  int_of_string t_rwys
-       in let t_cfmu =  if t_cfmus = "_" then None else  Tcfmu (int_of_string t_cfmus)
-       in let string_to_pos chaine = let l = Str.split (Str.regexp ",") chaine
-                                        in let x = int_of_string (List.hd l)
-                                        in let y = int_of_string (List.hd (List.tl l))
-                                        in newPosition x y
-       in let traj = List.map string_to_pos trajs
+       in let t_cfmu = cfmu_of_string t_cfmus
+       in let traj = List.map pos_of_string trajs
        in let f = newFlight  typ callsign size parking runway t_debut t_rwy t_cfmu traj
-       in list := f::!list
+       in list := f::(!list)
       |_ -> ()
     done;
     !list;
