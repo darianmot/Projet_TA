@@ -1,6 +1,10 @@
 (* Compile commande : ocamlc -o traffic.out str.cma traffic.ml *)
 
 let _file = "data/lfpg_flights.txt";;
+let step = 5;; (* Temps (en s) s'ecoulant entre 2 positions successives *)
+
+exception Not_found;;
+(* Exception levee si un element n'est pas trouve *)
 
 type position = {
   x : int;
@@ -77,6 +81,22 @@ let getT_cfmu flight = flight.t_cfmu;;
 let getTraj flight = flight.traj;;
 (*Fin acesseurs des attributs d'un vol*)
 
+let getT_fin flight =
+  (getT_debut flight) + (List.length (getTraj flight))*step;;
+(* Renvoie l'heure de fin de mouvement d'un fligth *)
+
+let pos_at_time t flight =
+  let traj = getTraj flight in
+  let t_debut = getT_debut flight in
+  let rec aux pos_list time = match pos_list with
+    |[] -> raise Not_found
+    |pos::q ->
+       if time <= t && (time + step) > t
+       then pos
+       else aux q (time + step)
+  in aux traj t_debut;;
+(* Renvoie la position d'un vol à t ou leve l'exception Not_found si l'avion n'est pas/plus en mouvement *)                         
+    
 let rec print_traffic l =
   match l with
   |[] -> Printf.printf ""
@@ -124,5 +144,3 @@ let read filename =
                                 
 let load () = read _file;;
 (* Charge la liste des vols du fichier _file (global) *)
-
-print_traffic (load ());;

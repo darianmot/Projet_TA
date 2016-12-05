@@ -157,7 +157,8 @@ let print_airport airport =
   let nc = (List.length airport.configs) in 
   Printf.printf "%s\nPoints : %d\nTaxiways : %d\nRunways :  %d\nConfigs : %d\n" airport.name_airport np nt nr nc;; 
 (* Affichage aeroport *)
-  
+
+
 
 let lfpg = read_airport "data/lfpg_map.txt";;
 print_airport lfpg;;
