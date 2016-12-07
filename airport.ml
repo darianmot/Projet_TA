@@ -160,5 +160,4 @@ let print_airport airport =
 
 
 
-let lfpg = read_airport "data/lfpg_map.txt";;
-print_airport lfpg;;
+
