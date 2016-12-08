@@ -11,13 +11,44 @@ let distance pos1 pos2 =
 let taxi_rule pos1 pos2 = distance pos1 pos2 >= (float min_dist);;
 (* Renvoie true si 2 postions sont suffisamment separees au roulage *)
 
-let explore = fun t p ->
-  if p = length route then true
-  else if p > 0 then match (t,p) with
-    Marked -> False
-    Unmarked -> Situation.mark
-    Conflict -> False
-  if explore (t+1) (p+1) then true
-  else if explore (t+1) p then true
-  else 
+let conflicted_pos t pos flight_l =
+  let traffic = traffic_at_t t flight_l in
+  let f bool pos2 = bool && (not (taxi_rule pos pos2)) in
+  List.fold_left f true traffic;;
+
+type noeud = int*(position list)*(int ref);;
+
+
+let resolution flight flight_l =
+  let debut = (getT_debut flight) in
+  let route = List.tl (getTraj flight) in
+  let tmin = ref max_int in
+  let traj = ref [] in
+  let rec explore = fun arbre  ->
+    match arbre with
+    |(_,[],_) -> true
+    |(t, _, tmin) when t > !tmin -> false
+    |(t, pos::q, tmin) ->
+       begin
+         tmin := t;
+         if (conflicted_pos t pos flight_l)
+         then false
+         else
+           begin
+             traj := pos::(!traj);
+             if explore (t+step, q, ref max_int) then true
+             else
+               begin
+                 if explore (t+step, pos::q, tmin)
+                 then true
+                 else begin print_traj !traj ;traj := (List.tl !traj); false end
+               end
+           end
+       end
+  in explore (debut, route, tmin);
+  List.rev !traj;;
+             
+  
+        
+
 

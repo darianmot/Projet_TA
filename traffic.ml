@@ -103,7 +103,7 @@ let rec traffic_at_t t flight_l = match flight_l with
      try let pos = pos_at_time t flight in
          pos::(traffic_at_t t q);
      with Not_found -> traffic_at_t t q;;
-(* Renvoie la liste des positions des avions en mouvements à l'instant t *)
+(* Renvoie la liste des positions des avions en mouvements dans la liste des vols flight_l à l'instant t *)
 
 
 let rec print_traffic l =
@@ -125,6 +125,10 @@ let rec print_traffic l =
     print_traffic q end;;
 (* Printf de la liste des vols passés en parametre (premiere position uniquement) *)
 
+let print_traj traj = 
+  let print_pos pos =
+    Printf.printf "%d, %d\n" pos.x pos.y in
+  List.iter print_pos traj;;
 
 let read filename =
   let channel = open_in filename
