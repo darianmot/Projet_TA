@@ -1,0 +1,8 @@
+airport.cmo : traffic.cmo
+airport.cmx : traffic.cmx
+main.cmo : traffic.cmo airport.cmo
+main.cmx : traffic.cmx airport.cmx
+solve.cmo : traffic.cmo
+solve.cmx : traffic.cmx
+traffic.cmo :
+traffic.cmx :
