@@ -84,6 +84,18 @@ let getT_fin flight =
   (getT_debut flight) + (List.length (getTraj flight))*step;;
 (* Renvoie l'heure de fin de mouvement d'un fligth *)
 
+let changeTraj flight newtraj =
+  {typ = getTyp flight;
+   callsign = getCallsign flight;
+   size = getSize flight;
+   parking = getParking flight;
+   runway = getRunway flight;
+   t_debut = getT_debut flight;
+   t_rwy = getT_rwy flight;
+   t_cfmu = getT_cfmu flight;
+   traj = newtraj};;
+(* Renvoie une copie d'un flight ayant pour trajectoire newtraj *)
+
 let pos_at_time t flight =
   let traj = getTraj flight in
   let t_debut = getT_debut flight in
@@ -96,6 +108,14 @@ let pos_at_time t flight =
   in aux traj t_debut;;
 (* Renvoie la position d'un vol à t ou leve l'exception Not_found si l'avion n'est pas/plus en mouvement *)                         
 
+let is_parked t flight =
+  try let pos = pos_at_time t flight in
+      if (getTyp flight) == DEP
+      then  List.hd (getTraj flight) = pos   (* On est encore au parking *)
+      else List.hd (List.rev (getTraj flight)) = pos   (* On est déjà au parking *)
+  with Not_found -> false;;
+(* Renvoie true si le vol est au parking à la date t, false sinon *)
+           
 
 let rec traffic_at_t t flight_l = match flight_l with
   |[] -> []
@@ -104,6 +124,13 @@ let rec traffic_at_t t flight_l = match flight_l with
          pos::(traffic_at_t t q);
      with Not_found -> traffic_at_t t q;;
 (* Renvoie la liste des positions des avions en mouvements dans la liste des vols flight_l à l'instant t *)
+
+
+let print_traj traj = 
+  let print_pos pos =
+    Printf.printf "(%d,%d) " pos.x pos.y in
+  List.iter print_pos traj;;
+(* Printf d'une trajectoire *)
 
 
 let rec print_traffic l =
@@ -121,14 +148,12 @@ let rec print_traffic l =
       |None -> "_"
       |Tcfmu t -> string_of_int t
          in Printf.printf "%s " cfmu;
-    let pos1 =  List.hd (getTraj f) in Printf.printf "(%d, %d)\n" pos1.x pos1.y;
+    print_traj (getTraj f);
+    Printf.printf "\n";
     print_traffic q end;;
-(* Printf de la liste des vols passés en parametre (premiere position uniquement) *)
+(* Printf de la liste des vols passés en parametre *)
 
-let print_traj traj = 
-  let print_pos pos =
-    Printf.printf "%d, %d\n" pos.x pos.y in
-  List.iter print_pos traj;;
+
 
 let read filename =
   let channel = open_in filename
