@@ -200,7 +200,7 @@ tableau;;
 tri_fusion tableau;;
 
 impr tableau;;
-
+ (*
 let sequence = fun retard i ->
   let ref borne = max_int in
   let rec sequence_rec = fun born retard i ->
@@ -230,7 +230,7 @@ let sequence = fun retard i ->
   else 
   borne := retard in
 
-sequence_rec borne retard i;;
+  sequence_rec borne retard i;;*)
 		    
 		  
        

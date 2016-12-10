@@ -1,7 +1,7 @@
 open Traffic;;
 open Airport;;
 
-let _file = "data/lfpg_flights.txt";;
+let _file = "data/lfpg_flights_light.txt";;
 
 let load = read _file;;
 (* Charge la liste des vols du fichier _file (global) *)
@@ -9,11 +9,6 @@ let load = read _file;;
 (*let lfpg = read_airport "data/lfpg_map.txt";;
   print_airport lfpg;;*)
 
-(*Tests
-let traf = traffic_at_t 6500 load;;
-let print_pos pos =
-  Printf.printf "%d, %d\n" pos.x pos.y;;
-  List.iter print_pos traf;;*)
-
 let new_load = Solve.resolution load;;
-print_traffic new_load;;
+
+Plot.start 5100 new_load;;

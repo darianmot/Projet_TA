@@ -78,6 +78,17 @@ let getT_debut flight = flight.t_debut;;
 let getT_rwy flight = flight.t_rwy;;
 let getT_cfmu flight = flight.t_cfmu;;
 let getTraj flight = flight.traj;;
+
+let get_typ flight = flight.typ;;
+let get_callsign flight = flight.callsign;;
+let get_size flight = flight.size;;
+let get_parking flight = flight.parking;;
+let get_runway flight = flight.runway;;
+let get_t_debut flight = flight.t_debut;;
+let get_t_rwy flight = flight.t_rwy;;
+let get_t_cfmu flight = flight.t_cfmu;;
+let get_traj flight = flight.traj;;
+
 (*Fin acesseurs des attributs d'un vol*)
 
 let getT_fin flight =
@@ -116,6 +127,14 @@ let is_parked t flight =
   with Not_found -> false;;
 (* Renvoie true si le vol est au parking à la date t, false sinon *)
            
+
+let rec flight_at_t t flight_l =  match flight_l with
+  |[] -> []
+  |flight::q ->
+     try let pos = pos_at_time t flight in
+         (flight, pos)::(flight_at_t t q);
+     with Not_found -> flight_at_t t q;;
+(* Renvoie la liste (flight, position du flight à t) des avions en mouvements dans la liste des vols flight_l à l'instant t  *)
 
 let rec traffic_at_t t flight_l = match flight_l with
   |[] -> []

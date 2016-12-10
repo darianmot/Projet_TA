@@ -67,7 +67,7 @@
 #
 # The Caml sources (including camlyacc and camllex source files)
 
-SOURCES = traffic.ml airport.ml solve.ml main.ml
+SOURCES = traffic.ml airport.ml solve.ml plot.ml main.ml
 
 # The executable file to generate
 
@@ -89,7 +89,7 @@ CAMLYACC = ocamlyacc
 # LIBS=$(WITHGRAPHICS) $(WITHUNIX) $(WITHSTR) $(WITHNUMS) $(WITHTHREADS)\
 # $(WITHDBM)
 
-LIBS=$(WITHGRAPHICS) $(WITHSTR)
+LIBS=$(WITHGRAPHICS) $(WITHSTR) $(WITHUNIX)
 
 # Should be set to -custom if you use any of the libraries above
 # or if any C code have to be linked with your program
