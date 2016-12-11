@@ -10,6 +10,6 @@ let load = read _file;;
   print_airport lfpg;;*)
 
 
-let new_load = Solve.resolution load;;
-
+let (new_load, retard) = Solve.resolution load;;
+Printf.printf "%d\n" retard;;
 Plot.start 5100 new_load;;

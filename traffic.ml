@@ -95,17 +95,17 @@ let getT_fin flight =
   (getT_debut flight) + (List.length (getTraj flight))*step;;
 (* Renvoie l'heure de fin de mouvement d'un fligth *)
 
-let changeTraj flight newtraj =
+let copy_flight flight t_rwy newtraj =
   {typ = getTyp flight;
    callsign = getCallsign flight;
    size = getSize flight;
    parking = getParking flight;
    runway = getRunway flight;
    t_debut = getT_debut flight;
-   t_rwy = getT_rwy flight;
+   t_rwy = t_rwy;
    t_cfmu = getT_cfmu flight;
    traj = newtraj};;
-(* Renvoie une copie d'un flight ayant pour trajectoire newtraj *)
+(* Renvoie une copie d'un flight ayant pour trajectoire newtraj et une heure de debut de piste t_rwy*)
 
 let pos_at_time t flight =
   let traj = getTraj flight in
@@ -144,6 +144,13 @@ let rec traffic_at_t t flight_l = match flight_l with
      with Not_found -> traffic_at_t t q;;
 (* Renvoie la liste des positions des avions en mouvements dans la liste des vols flight_l à l'instant t *)
 
+let separation = fun i j -> 
+	match (get_size i,get_size j) with 
+	(H,L) -> 180 
+      | (M,L) -> 180
+      | (H,M) -> 120 
+      | (H,H) -> 90
+      | (_,_) -> 60;;
 
 let print_traj traj = 
   let print_pos pos =
