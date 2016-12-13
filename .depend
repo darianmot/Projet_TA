@@ -2,11 +2,11 @@ airport.cmo : traffic.cmo
 airport.cmx : traffic.cmx
 main.cmo : traffic.cmo solve.cmo plot.cmo airport.cmo
 main.cmx : traffic.cmx solve.cmx plot.cmx airport.cmx
-plot.cmo : traffic.cmo
-plot.cmx : traffic.cmx
+plot.cmo : traffic.cmo airport.cmo
+plot.cmx : traffic.cmx airport.cmx
 sequencement.cmo :
 sequencement.cmx :
-solve.cmo : traffic.cmo
-solve.cmx : traffic.cmx
+solve.cmo : traffic.cmo airport.cmo
+solve.cmx : traffic.cmx airport.cmx
 traffic.cmo :
 traffic.cmx :

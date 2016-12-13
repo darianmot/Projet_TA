@@ -1,8 +1,10 @@
 (* Compile commande :  ocamlc -o solve str.cma traffic.cmo solve.ml *)
 
 open Traffic;;
+open Airport;;
 
-let min_dist = 70;; (* Distance minimale de séparation *)
+let min_dist = 70;; (* Distance minimale de separation au roulage *)
+let aire_piste = 90;; (* Distance minimale de separation a la piste lorsqu'elle est utilisee *)
 
 let distance pos1 pos2 =
   sqrt (float (pos1.x - pos2.x) ** 2. +.  float (pos1.y - pos2.y) ** 2.) ;;
@@ -14,7 +16,7 @@ let taxi_rule pos1 pos2 = distance pos1 pos2 >= (float min_dist);;
 let conflicted_roulage t pos traffic =
   let roulage bool (flight, position) = bool ||  (not (taxi_rule pos position)) in
   List.fold_left roulage false traffic;;
-  (* conflit de seperation roulage *)
+  (* Conflit de seperation roulage *)
 
 let conflicted_turbulence f t p p_rwy traffic = 
     if (getTyp f = DEP) && p >= p_rwy then
@@ -29,11 +31,31 @@ let conflicted_turbulence f t p p_rwy traffic =
         |t::q -> piste q
       in piste traffic
     else false;;
-(* conflit de separation piste avec f flight a traiter, p le numero de position actuel*)
+(* Conflit de separation piste avec f flight a traiter, p le numero de position actuel*)
+
+let distance_rwy pos rwy =
+  let a = List.hd rwy.position_runway in
+  let b = List.hd (List.tl rwy.position_runway) in
+  let num = abs ((b.y-a.y)*pos.x - (b.x-a.x)*pos.y + b.x*a.y + b.y*a.x) in
+  let denum = distance a b in
+  int_of_float ( float num /. denum );;
+
+let conflicted_airepiste t pos flight traffic dict_runway =
+  let check_if_rwy_used f =
+    if t >= (getT_rwy f)
+    then let rwy = List.assoc (getRunway f) dict_runway in
+         let d = distance_rwy pos rwy in
+         Printf.printf "%s : %d; %d\n" flight.callsign d t;
+         d <= aire_piste
+    else false
+  in let aux bool (f, position) = bool || (check_if_rwy_used f) in 
+     List.fold_left aux false traffic;;
+(* Conflit aire de piste *)
 
 (* Renvoie true si la position est conflictuelle a t, false sinon *)
 
-let rec resolution flight_l =
+let rec resolution flight_l airport =
+  let dict_runway = Airport.dict_runways airport in
   let rec aux retard solved_flight flight_to_solve =
     match flight_to_solve with
     |[] -> (List.rev solved_flight, retard)
@@ -54,7 +76,7 @@ let rec resolution flight_l =
               tmin.(p) <- t;
               let traffic = flight_at_t t solved_flight in
               let parked = if getTyp flight = DEP then p = 0 else false in (* A modifier *)
-              if (not parked) && ( conflicted_roulage t pos traffic || conflicted_turbulence flight t p p_rwy solved_flight )
+              if (not parked) && ( conflicted_roulage t pos traffic || conflicted_turbulence flight t p p_rwy solved_flight || conflicted_airepiste t pos flight traffic dict_runway)
               then false
               else
                 begin

@@ -101,6 +101,10 @@ let newAirport name pts twys rwys confs num = {
   
 (*Fin constructeurs *)
 
+let getConfig airport =
+  List.nth airport.configs airport.numero_config;;
+(* Renvoie la config effective d'un airport *)
+
 let read_airport filename =
   let channel = open_in filename in
   let points = ref [] in
@@ -128,17 +132,17 @@ let read_airport filename =
                let pos = List.map pos_of_string pos_l in
                let rwy = newRunway name (qfu1,qfu2) pt pos in
                runways := rwy::(!runways)
-               |key::name::qfus_l when key = conf_key->
-                  let rec qfus_of_strings list_qfus dep arr = match list_qfus with
-                    |[] -> (dep, arr);
-                    |t::q  -> let qfu = Str.split (Str.regexp ",") t
-                              in match qfu with
-                              |typ_s::name::points -> if flight_type_of_string typ_s == ARR
-                                then qfus_of_strings q dep ((name,points)::arr)
-                                else qfus_of_strings q ((name,points)::dep) arr
-                              |_ ->  qfus_of_strings q dep arr  (* Cas d'un mauvais format *)
-                  in let (dep_qfu, arr_qfu) = qfus_of_strings qfus_l [] []
-                     in configs := (newConfig name dep_qfu arr_qfu)::(!configs)
+            |key::name::qfus_l when key = conf_key->
+               let rec qfus_of_strings list_qfus dep arr = match list_qfus with
+                 |[] -> (dep, arr);
+                 |t::q  -> let qfu = Str.split (Str.regexp ",") t
+                           in match qfu with
+                           |typ_s::name::points -> if flight_type_of_string typ_s == ARR
+                             then qfus_of_strings q dep ((name,points)::arr)
+                             else qfus_of_strings q ((name,points)::dep) arr
+                           |_ ->  qfus_of_strings q dep arr  (* Cas d'un mauvais format *)
+               in let (dep_qfu, arr_qfu) = qfus_of_strings qfus_l [] []
+                  in configs := (newConfig name dep_qfu arr_qfu)::(!configs)
             |_ -> () (* Cas d'un mauvais format *)
           done;
           newAirport "XXX" [] [] [] [] 0; (* Pour renvoyer le meme type dans le try et dans le with *)
@@ -158,6 +162,22 @@ let print_airport airport =
   Printf.printf "%s\nPoints : %d\nTaxiways : %d\nRunways :  %d\nConfigs : %d\n" airport.name_airport np nt nr nc;; 
 (* Affichage aeroport *)
 
+let rec runway_of_qfu qfu_s rwy_l =
+  match rwy_l with
+  |[] -> raise Not_found
+  |rwy::q ->
+     if (fst rwy.qfus = qfu_s) || (snd rwy.qfus = qfu_s)
+     then rwy
+     else runway_of_qfu qfu_s q;;
+(* Renvoie la piste associee a la chaine qfu_s si la piste se trouve dans la liste rwy_l, et leve Not_found sinon *)
 
-
-
+let dict_runways airport =
+  let config = getConfig airport in
+  let rwy_l = airport.runways in
+  let qfus_to_string liste (qfu, access_points) = qfu::liste in
+  let dep_qfu = List.fold_left qfus_to_string [] config.dep_qfu in
+  let arr_qfu = List.fold_left qfus_to_string [] config.arr_qfu in
+  let qfus_in_services = dep_qfu@arr_qfu in 
+  let dict_of_qfus qfu = (qfu, (runway_of_qfu qfu rwy_l)) in
+  List.map dict_of_qfus qfus_in_services;;
+(* Dictionnaire des pistes ayant pour clef le nom du qfu en service*)

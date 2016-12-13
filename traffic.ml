@@ -2,8 +2,6 @@
 
 let step = 5;; (* Temps (en s) s'ecoulant entre 2 positions successives *)
 
-exception Not_found;;
-(* Exception levee si un element n'est pas trouve *)
 
 type position = {
   x : int;

@@ -1,10 +1,9 @@
 open Traffic;;
 open Graphics;;
+open Airport;;
 
 let max_coord_x = 5000;;
 let max_coord_y = 4000;;
-
-let init () = open_graph "";;
 
 let pos_to_pix pos = 
   let win_x =  size_x () in
@@ -26,12 +25,40 @@ let draw_traffic_at_t t flight_l =
   List.iter aux todraw;;
 (* Dessine le traffic d'une liste de vols à t *)
 
-let start t_init flight_l= 
-  init ();
+
+
+let plot_taxi taxi =
+  let pix_l = List.map pos_to_pix taxi.position_taxiway in
+  let rec aux l =
+    match l with
+    |[] -> ()
+    |[x] -> ()
+    |(x0,y0)::(x1,y1)::q ->
+       begin
+         draw_segments [|(x0,y0,x1,y1)|];
+         aux ((x1,y1)::q)
+       end
+  in aux pix_l;;
+(* Plot un taxiway *)
+
+let plot_rwy rwy =
+  let pix_l = List.map pos_to_pix rwy.position_runway in
+  match pix_l with
+  |(x0,y0)::(x1,y1)::q -> draw_segments [|(x0,y0,x1,y1)|]
+  |_ -> ();;
+
+let plot_airport airport =
+ List.iter plot_rwy airport.runways
+(*List.iter plot_taxi airport.taxiways*);;
+(* Plot un airport *)
+
+let start t_init flight_l airport = 
+  open_graph "";
   let t = ref t_init in
   try
     while true do
       draw_traffic_at_t !t flight_l;
+      plot_airport airport;
       begin
         match read_key () with
         |'q' -> raise Exit
@@ -41,3 +68,5 @@ let start t_init flight_l=
       clear_graph ();
     done
   with Exit -> ();;
+(* Lance l'animation *)
+
