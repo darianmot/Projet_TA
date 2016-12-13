@@ -36,11 +36,13 @@ let conflicted_turbulence f t p p_rwy traffic =
 let distance_rwy pos rwy =
   let a = List.hd rwy.position_runway in
   let b = List.hd (List.tl rwy.position_runway) in
-  let num = abs ((b.y-a.y)*pos.x - (b.x-a.x)*pos.y + b.x*a.y + b.y*a.x) in
+  let num = abs ((b.y-a.y)*pos.x - (b.x-a.x)*pos.y + b.x*a.y - b.y*a.x) in
   let denum = distance a b in
   int_of_float ( float num /. denum );;
 
 let conflicted_airepiste t pos flight traffic dict_runway =
+  if (getTyp flight = ARR) && t <= (getT_rwy flight) then false
+  else
   let check_if_rwy_used f =
     if t >= (getT_rwy f)
     then let rwy = List.assoc (getRunway f) dict_runway in
@@ -75,8 +77,8 @@ let rec resolution flight_l airport =
             begin
               tmin.(p) <- t;
               let traffic = flight_at_t t solved_flight in
-              let parked = if getTyp flight = DEP then p = 0 else false in (* A modifier *)
-              if (not parked) && ( conflicted_roulage t pos traffic || conflicted_turbulence flight t p p_rwy solved_flight || conflicted_airepiste t pos flight traffic dict_runway)
+              (*let parked = if getTyp flight = DEP then p = 0 else false in (* A modifier *)*)
+              if (p!=0) && ( conflicted_roulage t pos traffic || conflicted_turbulence flight t p p_rwy solved_flight || conflicted_airepiste t pos flight traffic dict_runway)
               then false
               else
                 begin
