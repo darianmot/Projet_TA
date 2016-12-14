@@ -5,6 +5,7 @@ open Airport;;
 
 let min_dist = 70;; (* Distance minimale de separation au roulage *)
 let aire_piste = 90;; (* Distance minimale de separation a la piste lorsqu'elle est utilisee *)
+let max_sep = 180;; (* Temps max de separation sur piste entre les avions *)
 
 let distance pos1 pos2 =
   sqrt (float (pos1.x - pos2.x) ** 2. +.  float (pos1.y - pos2.y) ** 2.) ;;
@@ -12,6 +13,16 @@ let distance pos1 pos2 =
 
 let taxi_rule pos1 pos2 = distance pos1 pos2 >= (float min_dist);;
 (* Renvoie true si 2 postions sont suffisamment separees au roulage *)
+
+let rec possible_conflicted_flight t flight_l =
+  match flight_l with
+  |[] -> []
+  |f::q ->
+     if (t <= (getT_fin f) + max_sep)
+     then f::(possible_conflicted_flight t q)
+     else possible_conflicted_flight t q
+(* Renvoie la liste des avions qui sont encore possiblement conflictuel a t *)
+
 
 let conflicted_roulage t pos traffic =
   let roulage bool (flight, position) = bool ||  (not (taxi_rule pos position)) in
@@ -39,6 +50,7 @@ let distance_rwy pos rwy =
   let num = abs ((b.y-a.y)*pos.x - (b.x-a.x)*pos.y + b.x*a.y - b.y*a.x) in
   let denum = distance a b in
   int_of_float ( float num /. denum );;
+(* Calcule la distance (proj orthogonale) d'une position a l'axe d'un piste *)
 
 let conflicted_airepiste t pos flight traffic dict_runway =
   if (getTyp flight = ARR) && t <= (getT_rwy flight) then false
@@ -75,7 +87,6 @@ let rec resolution flight_l airport =
             begin
               tmin.(p) <- t;
               let traffic = flight_at_t t solved_flight in
-              (*let parked = if getTyp flight = DEP then p = 0 else false in (* A modifier *)*)
               if (p!=0) && ( conflicted_roulage t pos traffic || conflicted_turbulence flight t p p_rwy solved_flight || conflicted_airepiste t pos flight traffic dict_runway)
               then false
               else
@@ -94,7 +105,7 @@ let rec resolution flight_l airport =
        in if explore (debut, 0, tmin) route
          then 
            let newF = copy_flight flight tmin.(p_rwy) (List.rev !traj) in
-           let new_retard = retard + (getT_fin newF - getT_fin flight) in
+           let new_retard = retard + (getT_fin newF - getT_fin flight) in 
            aux new_retard (newF::solved_flight) q
          else begin Printf.printf "+++ Fail to solve %s +++" (getCallsign flight); (solved_flight, retard) end;
   in aux 0 [] flight_l;;

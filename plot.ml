@@ -20,8 +20,8 @@ let draw_pos pos rayon =
 
 let draw_traffic_at_t t flight_l =
   let d_pix = int_of_float ( (float 70 /. float max_coord_x) *. (float (size_x ()) /. 2.) ) in
-  let todraw = flight_at_t t flight_l in
-  let aux (flight, pos) = draw_pos pos (d_pix/2) in
+  let todraw = traffic_at_t t flight_l in
+  let aux  pos = draw_pos pos (d_pix/2) in
   List.iter aux todraw;;
 (* Dessine le traffic d'une liste de vols à t *)
 
