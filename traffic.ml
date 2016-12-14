@@ -37,6 +37,7 @@ type flight = {
   runway : string;
   t_debut : int;
   t_rwy : int;
+  t_eff : int;
   t_cfmu : cfmu;
   traj : position list;
 };;
@@ -55,6 +56,7 @@ let newFlight typ callsign size parking runway t_debut t_rwy t_cfmu traj =
    runway = runway;
    t_debut = t_debut;
    t_rwy = t_rwy;
+   t_eff = 0;
    t_cfmu = t_cfmu;
    traj = traj};;
 (* Enregistre un nouveau vol *)
@@ -76,6 +78,7 @@ let getT_debut flight = flight.t_debut;;
 let getT_rwy flight = flight.t_rwy;;
 let getT_cfmu flight = flight.t_cfmu;;
 let getTraj flight = flight.traj;;
+let getT_eff flight = flight.t_eff;;
 
 let get_typ flight = flight.typ;;
 let get_callsign flight = flight.callsign;;
@@ -86,6 +89,7 @@ let get_t_debut flight = flight.t_debut;;
 let get_t_rwy flight = flight.t_rwy;;
 let get_t_cfmu flight = flight.t_cfmu;;
 let get_traj flight = flight.traj;;
+let get_t_eff flight = flight.t_eff;;
 
 (*Fin acesseurs des attributs d'un vol*)
 
@@ -101,9 +105,23 @@ let copy_flight flight t_rwy newtraj =
    runway = getRunway flight;
    t_debut = getT_debut flight;
    t_rwy = t_rwy;
+   t_eff = getT_eff flight;
    t_cfmu = getT_cfmu flight;
    traj = newtraj};;
 (* Renvoie une copie d'un flight ayant pour trajectoire newtraj et une heure de debut de piste t_rwy*)
+
+let change_t_eff flight t_eff =
+  {typ = getTyp flight;
+   callsign = getCallsign flight;
+   size = getSize flight;
+   parking = getParking flight;
+   runway = getRunway flight;
+   t_debut = getT_debut flight;
+   t_rwy = get_t_eff flight;
+   t_eff = t_eff;
+   t_cfmu = getT_cfmu flight;
+   traj = getTraj flight};;
+(* Renvoie un copie de flight en changeant le temps effectif en t_eff *)
 
 let pos_at_time t flight =
   let traj = getTraj flight in
