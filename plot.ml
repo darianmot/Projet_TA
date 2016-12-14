@@ -64,6 +64,8 @@ let start t_init flight_l airport =
   try
     while true do
       draw_image !background 0 0;
+      moveto 5 5;
+      draw_string ("Temps : " ^ string_of_int !t);
       draw_traffic_at_t !t flight_l;    
       begin
         match read_key () with
