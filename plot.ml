@@ -3,7 +3,9 @@ open Graphics;;
 open Airport;;
 
 let max_coord_x = 5000;;
-let max_coord_y = 4000;;
+let max_coord_y = 3500;;
+let airport_color = cyan;;
+let flight_color = black;;
 
 let pos_to_pix pos = 
   let win_x =  size_x () in
@@ -48,17 +50,21 @@ let plot_rwy rwy =
   |_ -> ();;
 
 let plot_airport airport =
- List.iter plot_rwy airport.runways
-(*List.iter plot_taxi airport.taxiways*);;
+ List.iter plot_rwy airport.runways;
+List.iter plot_taxi airport.taxiways;;
 (* Plot un airport *)
 
 let start t_init flight_l airport = 
   open_graph "";
+  set_color airport_color;
+  plot_airport airport;
+  let background = ref (get_image 0 0 (size_x ()) (size_y ())) in
   let t = ref t_init in
+  set_color flight_color;
   try
     while true do
-      draw_traffic_at_t !t flight_l;
-      plot_airport airport;
+      draw_image !background 0 0;
+      draw_traffic_at_t !t flight_l;    
       begin
         match read_key () with
         |'q' -> raise Exit
