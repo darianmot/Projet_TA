@@ -44,16 +44,14 @@ let conflicted_airepiste t pos flight traffic dict_runway =
   if (getTyp flight = ARR) && t <= (getT_rwy flight) then false
   else
   let check_if_rwy_used f =
-    if t >= (getT_rwy f)
+    if ((getTyp f = DEP) && t >= (getT_rwy f)) || ((getTyp f = ARR) && t <= (getT_rwy f))
     then let rwy = List.assoc (getRunway f) dict_runway in
          let d = distance_rwy pos rwy in
-         Printf.printf "%s : %d; %d\n" flight.callsign d t;
          d <= aire_piste
     else false
   in let aux bool (f, position) = bool || (check_if_rwy_used f) in 
      List.fold_left aux false traffic;;
 (* Conflit aire de piste *)
-
 (* Renvoie true si la position est conflictuelle a t, false sinon *)
 
 let rec resolution flight_l airport =
