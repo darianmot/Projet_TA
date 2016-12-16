@@ -13,4 +13,4 @@ let (new_load, retard) = Solve.resolution load lfpg;;
 let t2 = Sys.time ();;
 Printf.printf "Retard total : %d\n" retard;;
 Printf.printf "Temps : %f\n" (t2 -. t1);;
-Plot.start 5000 new_load lfpg;;
+Plot.start 8500 new_load lfpg;;

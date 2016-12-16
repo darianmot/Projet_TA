@@ -14,14 +14,18 @@ let distance pos1 pos2 =
 let taxi_rule pos1 pos2 = distance pos1 pos2 >= (float min_dist);;
 (* Renvoie true si 2 postions sont suffisamment separees au roulage *)
 
-let rec possible_conflicted_flight t flight_l =
-  match flight_l with
-  |[] -> []
-  |f::q ->
-     if (t <= (getT_fin f) + max_sep)
-     then f::(possible_conflicted_flight t q)
-     else possible_conflicted_flight t q
-(* Renvoie la liste des avions qui sont encore possiblement conflictuel a t *)
+let possible_conflicted_flight flight flight_l =
+  let t_fin = getT_fin flight in
+  let t_deb = getT_debut flight in
+  let rec aux flight_l = 
+    match flight_l with
+    |[] -> []
+    |f::q ->
+      if ((t_fin < getT_debut f) || (t_deb > (getT_fin f) + max_sep))
+      then aux q
+      else (f::aux q)
+        in aux flight_l;;
+(* Renvoie la liste des avions qui sont  possiblement conflictuel pour un flight *)
 
 
 let conflicted_roulage t pos traffic =
@@ -78,6 +82,7 @@ let rec resolution flight_l airport =
        let tmin = Array.make n (-max_int) in
        let traj = ref [] in
        let p_rwy = ((getT_rwy flight) - debut) / step in
+       let trouble_flights = possible_conflicted_flight flight solved_flight in
        let rec explore = fun arbre pos_l ->
          match arbre with
          |(_,p,_) when p = n -> true
@@ -86,8 +91,8 @@ let rec resolution flight_l airport =
             let pos = List.hd pos_l in 
             begin
               tmin.(p) <- t;
-              let traffic = flight_at_t t solved_flight in
-              if (p!=0) && ( conflicted_roulage t pos traffic || conflicted_turbulence flight t p p_rwy solved_flight || conflicted_airepiste t pos flight traffic dict_runway)
+              let traffic = flight_at_t t trouble_flights in
+              if (p!=0) && ( conflicted_roulage t pos traffic || conflicted_turbulence flight t p p_rwy trouble_flights || conflicted_airepiste t pos flight traffic dict_runway)
               then false
               else
                 begin
