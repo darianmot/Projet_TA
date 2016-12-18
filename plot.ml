@@ -6,6 +6,7 @@ let max_coord_x = 5000;;
 let max_coord_y = 3500;;
 let airport_color = cyan;;
 let flight_color = black;;
+let vitesse_lecture = 2.;;
 
 let pos_to_pix pos = 
   let win_x =  size_x () in
@@ -54,27 +55,67 @@ let plot_airport airport =
 List.iter plot_taxi airport.taxiways;;
 (* Plot un airport *)
 
+let wait sec =
+  let t0 = Sys.time () in
+  let t = ref (Sys.time ()) in
+  while (!t -. t0) < sec do
+    t:= Sys.time ()
+  done;;
+
 let start t_init flight_l airport = 
   open_graph "";
   set_color airport_color;
   plot_airport airport;
   let background = ref (get_image 0 0 (size_x ()) (size_y ())) in
   let t = ref t_init in
+  let auto = ref true in
   set_color flight_color;
   try
     while true do
       draw_image !background 0 0;
-      moveto 5 5;
+      moveto 1 0;
       draw_string ("Temps : " ^ string_of_int !t);
-      draw_traffic_at_t !t flight_l;    
+      let indication = "p = pause " in
+      let (size_text_x, size_text_y) = text_size indication in
+      moveto 1 (size_y () - size_text_y);
+      draw_string indication;
+      draw_traffic_at_t !t flight_l;
       begin
-        match read_key () with
-        |'q' -> raise Exit
-        |'-' -> t := !t - step
-        |_-> t := !t + step
+      if !auto then
+        let status = wait_next_event [Poll] in
+        if status.keypressed then
+          begin
+            match status.key with
+            |'q' -> raise Exit
+            |'p' -> auto := false;
+              ignore (wait_next_event [Key_pressed]);
+            |_ -> Printf.printf "%b" !auto;
+              ignore (wait_next_event [Key_pressed]);
+          end
+        else 
+          begin
+            wait (0.01 *. vitesse_lecture);
+            t := !t + step;
+          end
+      else
+        let avancer = "+ = avancer" in
+        let reculer = "- = reculer" in
+        moveto 1  (size_y () - 2*size_text_y);
+        draw_string avancer;
+        moveto 1  (size_y () - 3*size_text_y);
+        draw_string reculer;
+        begin 
+          let key = read_key () in
+          match key with
+          |'q' -> raise Exit
+          |'p' -> auto := true 
+          |'-' -> t := !t - step  
+          |'+' -> t := !t + step
+          |_ -> ()
+        end
       end;
       clear_graph ();
-    done
+    done;
   with Exit -> ();;
 (* Lance l'animation *)
 
