@@ -4,8 +4,13 @@ open Airport;;
 
 let max_coord_x = 5000;;
 let max_coord_y = 3500;;
+
 let airport_color = cyan;;
-let flight_color = black;;
+let light_color = blue;;
+let medium_color = red;;
+let heavy_color = black;;
+let text_color = black;;
+
 let vitesse_lecture = 2.;;
 
 let pos_to_pix pos = 
@@ -16,15 +21,23 @@ let pos_to_pix pos =
   (x, y);;
 (* Convertie les coord d'un point en coord pixel *)
 
-let draw_pos pos rayon =
+let draw_pos pos rayon size =
   let (x,y) = pos_to_pix pos in
-  draw_circle x y rayon;;
+  begin
+    match size with
+    |L -> set_color light_color;
+    |M -> set_color medium_color
+    |H -> set_color heavy_color;
+  end;
+  draw_circle x y rayon;
+  fill_circle x y rayon;
+  set_color text_color;;
 (* Dessine une position *)
 
 let draw_traffic_at_t t flight_l =
   let d_pix = int_of_float ( (float 70 /. float max_coord_x) *. (float (size_x ()) /. 2.) ) in
-  let todraw = traffic_at_t t flight_l in
-  let aux  pos = draw_pos pos (d_pix/2) in
+  let todraw = flight_at_t t flight_l in
+  let aux (flight, pos) = draw_pos pos (d_pix/2) (getSize flight) in
   List.iter aux todraw;;
 (* Dessine le traffic d'une liste de vols à t *)
 
@@ -62,20 +75,32 @@ let wait sec =
     t:= Sys.time ()
   done;;
 
-let start t_init flight_l airport = 
-  open_graph "";
+let plot_background airport sizex sizey =
   set_color airport_color;
   plot_airport airport;
-  let background = ref (get_image 0 0 (size_x ()) (size_y ())) in
+  get_image 0 0 sizex sizey;;
+(* Dessine l'aeroport et renvoie l'image associee *)
+
+let start t_init flight_l airport = 
+  open_graph "";
+  let sizex = ref (size_x ()) in
+  let sizey = ref (size_y ()) in
+  let background = ref (plot_background airport !sizex !sizey) in
   let t = ref t_init in
   let auto = ref true in
-  set_color flight_color;
   try
     while true do
+      if !sizex != size_x () ||  !sizey != size_y () then
+        begin
+          sizex := size_x ();
+          sizey := size_y ();
+          background := plot_background airport !sizex !sizey
+        end
+      else ();
       draw_image !background 0 0;
       moveto 1 0;
       draw_string ("Temps : " ^ string_of_int !t);
-      let indication = "p = pause " in
+      let indication = "p = pause; q= quitter " in
       let (size_text_x, size_text_y) = text_size indication in
       moveto 1 (size_y () - size_text_y);
       draw_string indication;
@@ -89,8 +114,7 @@ let start t_init flight_l airport =
             |'q' -> raise Exit
             |'p' -> auto := false;
               ignore (wait_next_event [Key_pressed]);
-            |_ -> Printf.printf "%b" !auto;
-              ignore (wait_next_event [Key_pressed]);
+            |_ -> ignore (wait_next_event [Key_pressed]);
           end
         else 
           begin
