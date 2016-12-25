@@ -2,16 +2,20 @@ open Traffic;;
 open Graphics;;
 open Airport;;
 
-let max_coord_x = 5000;;
+let max_coord_x = 5000;; 
 let max_coord_y = 3500;;
+(* Definissent l'echelle utilisee pour tracer l'aeroport *)
 
-let airport_color = cyan;;
+let taxi_color = cyan;;
+let rwy_color = rgb 192 192 192;;
 let light_color = blue;;
 let medium_color = red;;
 let heavy_color = black;;
 let text_color = black;;
+(* Couleurs *)
 
-let vitesse_lecture = 2.;;
+let vitesse_lecture = 1.;;
+(* Vitesse de lecture relative *)
 
 let pos_to_pix pos = 
   let win_x =  size_x () in
@@ -32,7 +36,8 @@ let draw_pos pos rayon size =
   draw_circle x y rayon;
   fill_circle x y rayon;
   set_color text_color;;
-(* Dessine une position *)
+(* Dessine un flight a un instant *)
+
 
 let draw_traffic_at_t t flight_l =
   let d_pix = int_of_float ( (float 70 /. float max_coord_x) *. (float (size_x ()) /. 2.) ) in
@@ -40,7 +45,6 @@ let draw_traffic_at_t t flight_l =
   let aux (flight, pos) = draw_pos pos (d_pix/2) (getSize flight) in
   List.iter aux todraw;;
 (* Dessine le traffic d'une liste de vols à t *)
-
 
 
 let plot_taxi taxi =
@@ -62,10 +66,15 @@ let plot_rwy rwy =
   match pix_l with
   |(x0,y0)::(x1,y1)::q -> draw_segments [|(x0,y0,x1,y1)|]
   |_ -> ();;
+(* Plot une piste *)
 
 let plot_airport airport =
- List.iter plot_rwy airport.runways;
-List.iter plot_taxi airport.taxiways;;
+  set_color taxi_color;
+  List.iter plot_taxi airport.taxiways;
+  set_color rwy_color;
+  set_line_width 5;
+  List.iter plot_rwy airport.runways;
+  set_line_width 1;;
 (* Plot un airport *)
 
 let wait sec =
@@ -74,12 +83,16 @@ let wait sec =
   while (!t -. t0) < sec do
     t:= Sys.time ()
   done;;
+(* Permet de mettre en pause le programme un nombre flottant de seconde *)
 
 let plot_background airport sizex sizey =
-  set_color airport_color;
+  let indication = "p = pause; q= quitter " in
+  let (size_text_x, size_text_y) = text_size indication in
+  moveto 1 (sizey  - size_text_y);
+  draw_string indication;
   plot_airport airport;
   get_image 0 0 sizex sizey;;
-(* Dessine l'aeroport et renvoie l'image associee *)
+(* Dessine l'aeroport ET renvoie l'image associee *)
 
 let start t_init flight_l airport = 
   open_graph "";
@@ -90,21 +103,17 @@ let start t_init flight_l airport =
   let auto = ref true in
   try
     while true do
-      if !sizex != size_x () ||  !sizey != size_y () then
+      if !sizex != size_x () ||  !sizey != size_y () then 
         begin
           sizex := size_x ();
           sizey := size_y ();
           background := plot_background airport !sizex !sizey
         end
-      else ();
+      else (); (* On redimensionne le fond si la taille de la fenetre change *)
       draw_image !background 0 0;
       moveto 1 0;
       draw_string ("Temps : " ^ string_of_int !t);
-      let indication = "p = pause; q= quitter " in
-      let (size_text_x, size_text_y) = text_size indication in
-      moveto 1 (size_y () - size_text_y);
-      draw_string indication;
-      draw_traffic_at_t !t flight_l;
+      draw_traffic_at_t !t flight_l; (* Affichage du temps courant et du traffic *)
       begin
       if !auto then
         let status = wait_next_event [Poll] in
@@ -118,12 +127,13 @@ let start t_init flight_l airport =
           end
         else 
           begin
-            wait (0.01 *. vitesse_lecture);
+            wait (0.02 /. vitesse_lecture);
             t := !t + step;
           end
       else
         let avancer = "+ = avancer" in
         let reculer = "- = reculer" in
+        let (size_text_x, size_text_y) = text_size avancer in
         moveto 1  (size_y () - 2*size_text_y);
         draw_string avancer;
         moveto 1  (size_y () - 3*size_text_y);
