@@ -14,6 +14,9 @@ let heavy_color = black;;
 let text_color = black;;
 (* Couleurs *)
 
+let flight_size = Solve.min_dist;;
+(* Taille d'un plot (en metre) *)
+
 let vitesse_lecture = 1.;;
 (* Vitesse de lecture relative *)
 
@@ -24,6 +27,10 @@ let pos_to_pix pos =
   let y = int_of_float ( (float pos.y /. float max_coord_y) *. (float win_y /. 2.) ) + win_y / 2 in
   (x, y);;
 (* Convertie les coord d'un point en coord pixel *)
+
+let m_to_pix lg =
+  int_of_float ( (float lg /. float max_coord_x) *. (float (size_x ()) /. 2.) );;
+(* Convertie un donnee metre en donnee pixel *)  
 
 let draw_pos pos rayon size =
   let (x,y) = pos_to_pix pos in
@@ -39,10 +46,10 @@ let draw_pos pos rayon size =
 (* Dessine un flight a un instant *)
 
 
-let draw_traffic_at_t t flight_l =
-  let d_pix = int_of_float ( (float 70 /. float max_coord_x) *. (float (size_x ()) /. 2.) ) in
+let draw_traffic_at_t t flight_l size =
+  let f_size = float (m_to_pix flight_size) *. size /. 2. in
   let todraw = flight_at_t t flight_l in
-  let aux (flight, pos) = draw_pos pos (d_pix/2) (getSize flight) in
+  let aux (flight, pos) = draw_pos pos (int_of_float f_size) (getSize flight) in
   List.iter aux todraw;;
 (* Dessine le traffic d'une liste de vols à t *)
 
@@ -113,7 +120,9 @@ let start t_init flight_l airport =
       draw_image !background 0 0;
       moveto 1 0;
       draw_string ("Temps : " ^ string_of_int !t);
-      draw_traffic_at_t !t flight_l; (* Affichage du temps courant et du traffic *)
+      draw_traffic_at_t (!t - 2*step) flight_l 0.5;
+      draw_traffic_at_t (!t - step) flight_l 0.75;
+      draw_traffic_at_t !t flight_l 1.; (* Affichage du temps courant et du traffic *)
       begin
       if !auto then
         let status = wait_next_event [Poll] in
