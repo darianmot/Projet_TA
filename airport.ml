@@ -114,36 +114,38 @@ let read_airport filename =
   let airport_name = input_line channel in
         try
           while true do  
-            let line = input_line channel in 
-            match Str.split (Str.regexp " ") line with
-            |key::name::typ_s::pos_l when key = pt_key ->
-               let typ = int_of_string typ_s in
-               let pt = (newPoint name (point_type_of_int typ) (pos_of_string (List.hd pos_l))) in
-                   points := pt::(!points)
-            |key::name::speed_s::size_s::oneway_s::pos_l when key = taxi_key ->
-               let speed = int_of_string speed_s in
-               let size = size_of_string size_s in
-               let oneway = (oneway_s = oneway_char) in
-               let pos = List.map pos_of_string pos_l in
-               let txy = (newTaxiway name speed size oneway pos) in
-               taxiways := txy::(!taxiways)
-            |key::name::qfu1::qfu2::pt_s::pos_l when key = rwy_key ->
-               let pt = Str.split (Str.regexp ",") pt_s in
-               let pos = List.map pos_of_string pos_l in
-               let rwy = newRunway name (qfu1,qfu2) pt pos in
-               runways := rwy::(!runways)
-            |key::name::qfus_l when key = conf_key->
-               let rec qfus_of_strings list_qfus dep arr = match list_qfus with
-                 |[] -> (dep, arr);
-                 |t::q  -> let qfu = Str.split (Str.regexp ",") t
-                           in match qfu with
-                           |typ_s::name::points -> if flight_type_of_string typ_s == ARR
-                             then qfus_of_strings q dep ((name,points)::arr)
-                             else qfus_of_strings q ((name,points)::dep) arr
-                           |_ ->  qfus_of_strings q dep arr  (* Cas d'un mauvais format *)
-               in let (dep_qfu, arr_qfu) = qfus_of_strings qfus_l [] []
-                  in configs := (newConfig name dep_qfu arr_qfu)::(!configs)
-            |_ -> () (* Cas d'un mauvais format *)
+            let line = input_line channel in
+            try
+              match Str.split (Str.regexp " ") line with 
+              |key::name::typ_s::pos_l when key = pt_key ->
+                 let typ = int_of_string typ_s in
+                 let pt = (newPoint name (point_type_of_int typ) (pos_of_string (List.hd pos_l))) in
+                 points := pt::(!points)
+              |key::name::speed_s::size_s::oneway_s::pos_l when key = taxi_key ->
+                 let speed = int_of_string speed_s in
+                 let size = size_of_string size_s in
+                 let oneway = (oneway_s = oneway_char) in
+                 let pos = List.map pos_of_string pos_l in
+                 let txy = (newTaxiway name speed size oneway pos) in
+                 taxiways := txy::(!taxiways)
+              |key::name::qfu1::qfu2::pt_s::pos_l when key = rwy_key ->
+                 let pt = Str.split (Str.regexp ",") pt_s in
+                 let pos = List.map pos_of_string pos_l in
+                 let rwy = newRunway name (qfu1,qfu2) pt pos in
+                 runways := rwy::(!runways)
+              |key::name::qfus_l when key = conf_key->
+                 let rec qfus_of_strings list_qfus dep arr = match list_qfus with
+                   |[] -> (dep, arr);
+                   |t::q  -> let qfu = Str.split (Str.regexp ",") t
+                             in match qfu with
+                             |typ_s::name::points -> if flight_type_of_string typ_s == ARR
+                               then qfus_of_strings q dep ((name,points)::arr)
+                               else qfus_of_strings q ((name,points)::dep) arr
+                             |_ ->  qfus_of_strings q dep arr  (* Cas d'un mauvais format *)
+                 in let (dep_qfu, arr_qfu) = qfus_of_strings qfus_l [] []
+                    in configs := (newConfig name dep_qfu arr_qfu)::(!configs)
+              |_ -> () (* Cas d'un mauvais format *)
+        with _ -> Printf.printf "ligne airport incorrecte (%s)\n" line
           done;
           newAirport "XXX" [] [] [] [] 0; (* Pour renvoyer le meme type dans le try et dans le with *)
         with 

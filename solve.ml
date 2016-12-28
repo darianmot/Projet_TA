@@ -71,48 +71,51 @@ let conflicted_airepiste t pos flight traffic dict_runway =
 (* Renvoie true si la position est conflictuelle a t, false sinon *)
 
 let rec resolution flight_l airport =
-  let dict_runway = Airport.dict_runways airport in
+  (* let dict_runway = Airport.dict_runways airport in *)
+  let dict_runway = [] in
   let rec aux retard solved_flight flight_to_solve =
     match flight_to_solve with
     |[] -> (List.rev solved_flight, retard)
     |flight::q ->
-       let debut = (getT_debut flight) in
-       let route = getTraj flight in 
-       let n = List.length route in
-       let tmin = Array.make n (-max_int) in
-       let traj = ref [] in
-       let p_rwy = ((getT_rwy flight) - debut) / step in
-       let trouble_flights = possible_conflicted_flight flight solved_flight in
-       let rec explore = fun arbre pos_l ->
-         match arbre with
-         |(_,p,_) when p = n -> true
-         |(t, p, tmin) when t <= tmin.(p) -> false 
-         |(t, p, tmin) ->
-            let pos = List.hd pos_l in 
-            begin
-              tmin.(p) <- t;
-              let traffic = flight_at_t t trouble_flights in
-              if (p!=0) && ( conflicted_roulage t pos traffic || conflicted_turbulence flight t p p_rwy trouble_flights || conflicted_airepiste t pos flight traffic dict_runway)
-              then false
-              else
-                begin
-                  traj := pos::(!traj);
-                  if explore (t + step, p + 1 , tmin) (List.tl pos_l)  (* On essaye d'avancer *)
-                  then true 
-                  else
-                    begin
-                      if explore (t + step, p, tmin) pos_l  (* Sinon on attend et réessaye *)
-                      then true
-                      else begin traj := (List.tl !traj); false end
-                    end
-                end
-            end
-       in if explore (debut, 0, tmin) route
-         then 
-           let newF = copy_flight flight tmin.(p_rwy) (List.rev !traj) in
-           let new_retard = retard + (getT_fin newF - getT_fin flight) in 
-           aux new_retard (newF::solved_flight) q
-         else begin Printf.printf "+++ Fail to solve %s +++" (getCallsign flight); (solved_flight, retard) end;
+       try
+         let debut = (getT_debut flight) in
+         let route = getTraj flight in 
+         let n = List.length route in
+         let tmin = Array.make n (-max_int) in
+         let traj = ref [] in
+         let p_rwy = ((getT_rwy flight) - debut) / step in
+         let trouble_flights = possible_conflicted_flight flight solved_flight in
+         let rec explore = fun arbre pos_l ->
+           match arbre with
+           |(_,p,_) when p = n -> true
+           |(t, p, tmin) when t <= tmin.(p) -> false 
+           |(t, p, tmin) ->
+              let pos = List.hd pos_l in 
+              begin
+                tmin.(p) <- t;
+                let traffic = flight_at_t t trouble_flights in
+                if (p!=0) && ( conflicted_roulage t pos traffic || conflicted_turbulence flight t p p_rwy trouble_flights || conflicted_airepiste t pos flight traffic dict_runway)
+                then false
+                else
+                  begin
+                    traj := pos::(!traj);
+                    if explore (t + step, p + 1 , tmin) (List.tl pos_l)  (* On essaye d'avancer *)
+                    then true 
+                    else
+                      begin
+                        if explore (t + step, p, tmin) pos_l  (* Sinon on attend et réessaye *)
+                        then true
+                        else begin traj := (List.tl !traj); false end
+                      end
+                  end
+              end
+         in if explore (debut, 0, tmin) route
+           then 
+             let newF = copy_flight flight tmin.(p_rwy) (List.rev !traj) in
+             let new_retard = retard + (getT_fin newF - getT_fin flight) in 
+             aux new_retard (newF::solved_flight) q
+           else begin Printf.printf "+++ Fail to solve %s +++" (getCallsign flight); (solved_flight, retard) end;
+       with Not_found -> Printf.printf "Vol incorrect"; aux retard solved_flight q;
   in aux 0 [] flight_l;;
 (* A partir d'une liste de vols seqencee, renvoie la liste des vols sans conflits et le retard total engendre *)          
   

@@ -204,15 +204,20 @@ let read filename =
     while true do  
       let line = input_line channel in 
       match Str.split (Str.regexp " ") line with
-      |typ_s::callsign::size_s::parking::runway::t_debuts::t_rwys::t_cfmus::trajs -> 
-       let typ = flight_type_of_string typ_s
-       in let size = size_of_string size_s 
-       in let t_debut = int_of_string t_debuts
-       in let t_rwy =  int_of_string t_rwys
-       in let t_cfmu = cfmu_of_string t_cfmus
-       in let traj = List.map pos_of_string trajs
-       in let f = newFlight  typ callsign size parking runway t_debut t_rwy t_cfmu traj
-       in list := f::(!list)
+      |typ_s::callsign::size_s::parking::runway::t_debuts::t_rwys::t_cfmus::trajs ->
+         begin
+           try
+             let typ = flight_type_of_string typ_s in
+             let size = size_of_string size_s  in
+             let t_debut = int_of_string t_debuts in
+             let t_rwy =  int_of_string t_rwys in
+             let t_cfmu = cfmu_of_string t_cfmus in
+             let traj = List.map pos_of_string trajs in
+             let f = newFlight  typ callsign size parking runway t_debut t_rwy t_cfmu traj in
+             list := f::(!list)
+           with
+           | _ -> Printf.printf "ligne incorrecte (%s)\n" line
+         end
       |_ -> ()
     done;
     !list;

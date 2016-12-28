@@ -14,8 +14,11 @@ let heavy_color = black;;
 let text_color = black;;
 (* Couleurs *)
 
-let flight_size = Solve.min_dist;;
+let flight_size = Solve.min_dist;; 
 (* Taille d'un plot (en metre) *)
+
+let rwy_width = 5;;
+(* Largeur d'une piste (relative a un taxiway) *)
 
 let vitesse_lecture = 1.;;
 (* Vitesse de lecture relative *)
@@ -79,7 +82,7 @@ let plot_airport airport =
   set_color taxi_color;
   List.iter plot_taxi airport.taxiways;
   set_color rwy_color;
-  set_line_width 5;
+  set_line_width rwy_width;
   List.iter plot_rwy airport.runways;
   set_line_width 1;;
 (* Plot un airport *)
@@ -120,9 +123,9 @@ let start t_init flight_l airport =
       draw_image !background 0 0;
       moveto 1 0;
       draw_string ("Temps : " ^ string_of_int !t);
-      draw_traffic_at_t (!t - 2*step) flight_l 0.5;
-      draw_traffic_at_t (!t - step) flight_l 0.75;
       draw_traffic_at_t !t flight_l 1.; (* Affichage du temps courant et du traffic *)
+      draw_traffic_at_t (!t - 2*step) flight_l 0.5;
+      draw_traffic_at_t (!t - step) flight_l 0.75; 
       begin
       if !auto then
         let status = wait_next_event [Poll] in
@@ -157,7 +160,6 @@ let start t_init flight_l airport =
           |_ -> ()
         end
       end;
-      clear_graph ();
     done;
   with Exit -> ();;
 (* Lance l'animation *)
