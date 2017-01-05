@@ -8,22 +8,6 @@ let echanger = fun tab i j ->
 	tab.(i) <- tab.(j);
 	tab.(j) <- memoire;;
 		
-let separation = fun f1 f2 -> (* calcul de la séparation de turbulence de sillage *)
-  if not ((getRunway f1) = (getRunway f2))
-  then 0
-  else
-    begin
-    let cat1 = get_size f1 in
-    let cat2 = get_size f2 in
-	match  (cat1,cat2) with 
-	(H,L) -> 180 
-      | (M,L) -> 180
-      | (H,M) -> 120 
-      | (H,H) -> 90
-      | (_,_) -> 60
-    end;
-;;
-
 
 let list_to_tab = fun list ->
   Array.of_list list;;
@@ -93,9 +77,10 @@ sequence 0 0 tableau_sub;;
 
 impr tableau_sub get_t_eff;;
 
+(*
 let get_New_t_debut tab ->
   for i = 0 to Array.length tab
   do
     get_h_
-
+*)
 

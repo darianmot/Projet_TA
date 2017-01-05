@@ -22,11 +22,11 @@ let flight_type_of_string s = if s = "ARR" then ARR else DEP;;
 (* Associe une chaine a un type de vol *)
 
 type cfmu =
-  |None
+  |None_cfmu
   |Tcfmu of int;;
 (* Type creneau cfmu (valable que pour certains departs) *)
 
-let cfmu_of_string s = if s = "_" then None else Tcfmu (int_of_string s);;
+let cfmu_of_string s = if s = "_" then None_cfmu else Tcfmu (int_of_string s);;
 (* Associe à une chaine un cfmu *)
 
 type flight = {
@@ -173,13 +173,21 @@ let rec traffic_at_t t flight_l = match flight_l with
      with Not_found -> traffic_at_t t q;;
 (* Renvoie la liste des positions des avions en mouvements dans la liste des vols flight_l à l'instant t *)
 
-let separation = fun i j -> 
-	match (get_size i,get_size j) with 
+let separation = fun f1 f2 -> (* calcul de la séparation de turbulence de sillage *)
+  if not ((getRunway f1) = (getRunway f2))
+  then 0
+  else
+    begin
+    let cat1 = get_size f1 in
+    let cat2 = get_size f2 in
+	match  (cat1,cat2) with 
 	(H,L) -> 180 
       | (M,L) -> 180
       | (H,M) -> 120 
       | (H,H) -> 90
-      | (_,_) -> 60;;
+      | (_,_) -> 60
+    end;
+;;
 
 let print_traj traj = 
   let print_pos pos =
@@ -200,7 +208,7 @@ let rec print_traffic l =
     Printf.printf "%d " (getT_debut f);
     Printf.printf "%d " (getT_rwy f);
     let cfmu = match getT_cfmu f with
-      |None -> "_"
+      |None_cfmu -> "_"
       |Tcfmu t -> string_of_int t
          in Printf.printf "%s " cfmu;
     print_traj (getTraj f);
@@ -209,13 +217,22 @@ let rec print_traffic l =
 (* Printf de la liste des vols passés en parametre *)
 
 
+let may ~f x =
+    match x with
+    | None -> ()
+    | Some x -> ignore(f x);;
+(* may f (Some x) calls f x and may f None does nothing *)
 
-let read filename =
-  let channel = open_in filename
-  in let list = ref [] in
-     try
-    while true do  
-      let line = input_line channel in 
+let read ?n filename =
+  let channel = open_in filename in
+  let list = ref [] in
+  let cpt = ref 0 in
+  let check_endfile n = if n = !cpt then raise End_of_file else () in
+  try
+    while true do
+      let line = input_line channel in
+      may ~f:(check_endfile) n;
+      incr cpt;
       match Str.split (Str.regexp " ") line with
       |typ_s::callsign::size_s::parking::runway::t_debuts::t_rwys::t_cfmus::trajs -> 
        let typ = flight_type_of_string typ_s
@@ -229,10 +246,16 @@ let read filename =
       |_ -> ()
     done;
     !list;
-     with End_of_file -> close_in channel;
-       List.rev !list ;;
-(* Renvoie une liste de flight contenu dans un fichier *)
+  with End_of_file ->
+    begin
+      close_in channel;
+      Printf.printf "%d vols chargés\n" !cpt;
+      List.rev !list
+    end;;
+(* Renvoie une liste de flight contenu dans un fichier (ou dans ses n premieres lignes si specifie) *)
 
+      
+  
 
                                 
 

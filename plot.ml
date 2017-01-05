@@ -3,7 +3,7 @@ open Graphics;;
 open Airport;;
 
 let max_coord_x = 5000;; 
-let max_coord_y = 3500;;
+let max_coord_y = 3000;;
 (* Definissent l'echelle utilisee pour tracer l'aeroport *)
 
 let taxi_color = cyan;;
@@ -17,8 +17,6 @@ let text_color = black;;
 let flight_size = Solve.min_dist;;
 (* Taille d'un plot (en metre) *)
 
-let vitesse_lecture = 1.;;
-(* Vitesse de lecture relative *)
 
 let pos_to_pix pos = 
   let win_x =  size_x () in
@@ -101,7 +99,7 @@ let plot_background airport sizex sizey =
   get_image 0 0 sizex sizey;;
 (* Dessine l'aeroport ET renvoie l'image associee *)
 
-let start t_init flight_l airport = 
+let start t_init flight_l airport vitesse_lecture= 
   open_graph "";
   let sizex = ref (size_x ()) in
   let sizey = ref (size_y ()) in
@@ -120,9 +118,9 @@ let start t_init flight_l airport =
       draw_image !background 0 0;
       moveto 1 0;
       draw_string ("Temps : " ^ string_of_int !t);
+      draw_traffic_at_t !t flight_l 1.;
       draw_traffic_at_t (!t - 2*step) flight_l 0.5;
-      draw_traffic_at_t (!t - step) flight_l 0.75;
-      draw_traffic_at_t !t flight_l 1.; (* Affichage du temps courant et du traffic *)
+      draw_traffic_at_t (!t - step) flight_l 0.75; (* Affichage du temps courant et du traffic *)
       begin
       if !auto then
         let status = wait_next_event [Poll] in
