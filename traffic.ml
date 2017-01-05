@@ -117,8 +117,21 @@ let change_t_eff flight t_eff =
    parking = getParking flight;
    runway = getRunway flight;
    t_debut = getT_debut flight;
-   t_rwy = get_t_eff flight;
+   t_rwy = get_t_rwy flight;
    t_eff = t_eff;
+   t_cfmu = getT_cfmu flight;
+   traj = getTraj flight};;
+(* Renvoie un copie de flight en changeant le temps effectif en t_eff *)
+
+let change_t_debut flight t_debut =
+  {typ = getTyp flight;
+   callsign = getCallsign flight;
+   size = getSize flight;
+   parking = getParking flight;
+   runway = getRunway flight;
+   t_debut = t_debut;
+   t_rwy = get_t_rwy flight;
+   t_eff = getT_eff flight;
    t_cfmu = getT_cfmu flight;
    traj = getTraj flight};;
 (* Renvoie un copie de flight en changeant le temps effectif en t_eff *)

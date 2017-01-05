@@ -9,14 +9,20 @@ let echanger = fun tab i j ->
 	tab.(j) <- memoire;;
 		
 let separation = fun f1 f2 -> (* calcul de la séparation de turbulence de sillage *)
-  let cat1 = get_size f1 in
-  let cat2 = get_size f2 in
+  if not ((getRunway f1) = (getRunway f2))
+  then 0
+  else
+    begin
+    let cat1 = get_size f1 in
+    let cat2 = get_size f2 in
 	match  (cat1,cat2) with 
 	(H,L) -> 180 
       | (M,L) -> 180
       | (H,M) -> 120 
       | (H,H) -> 90
-      | (_,_) -> 60;;
+      | (_,_) -> 60
+    end;
+;;
 
 
 let list_to_tab = fun list ->
@@ -62,8 +68,12 @@ let sequence = fun retard i tab ->
 	then
 	  tab.(i) <- (change_t_eff tab.(i) (get_t_rwy tab.(i)))
 	else
+	  begin
 	  tab.(i) <- change_t_eff tab.(i) (max (get_t_rwy tab.(i)) (get_t_eff tab.(i-1) + (separation tab.(i-1) tab.(i))));
+	    Printf.printf "teff : %d\n" (get_t_eff tab.(i));
+	  end;
 	let retardi  = retard + (get_t_eff tab.(i)) - get_t_rwy tab.(i) in
+	Printf.printf "retardi : %d t_rwy : %d\n" retardi (get_t_rwy tab.(i));
 	if retardi < !borne
 	then
        	  sequence_rec retardi (i+1);
@@ -76,8 +86,16 @@ let sequence = fun retard i tab ->
     Printf.printf "retard : %d\n" !borne;
   in
   sequence_rec retard i ;;
-let tableau_sub = Array.sub tableau 0 20;;
+
+let tableau_sub = Array.sub tableau 0 4;;
 
 sequence 0 0 tableau_sub;;
 
 impr tableau_sub get_t_eff;;
+
+let get_New_t_debut tab ->
+  for i = 0 to Array.length tab
+  do
+    get_h_
+
+
