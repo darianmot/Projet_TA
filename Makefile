@@ -67,7 +67,7 @@
 #
 # The Caml sources (including camlyacc and camllex source files)
 
-SOURCES = traffic.ml airport.ml solve.ml plot.ml main.ml
+SOURCES = traffic.ml sequencement.ml airport.ml solve.ml plot.ml main.ml
 
 # The executable file to generate
 

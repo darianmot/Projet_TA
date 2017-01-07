@@ -1,7 +1,7 @@
 airport.cmo : traffic.cmo
 airport.cmx : traffic.cmx
-main.cmo : traffic.cmo solve.cmo plot.cmo airport.cmo
-main.cmx : traffic.cmx solve.cmx plot.cmx airport.cmx
+main.cmo : traffic.cmo solve.cmo sequencement.cmo plot.cmo airport.cmo
+main.cmx : traffic.cmx solve.cmx sequencement.cmx plot.cmx airport.cmx
 plot.cmo : traffic.cmo solve.cmo airport.cmo
 plot.cmx : traffic.cmx solve.cmx airport.cmx
 sequencement.cmo : traffic.cmo

@@ -1,4 +1,4 @@
-open Traffic;;
+open Sequencement;;
 open Airport;;
 
 let file = "data/lfpg_flights.txt";;
@@ -22,13 +22,13 @@ let usage_msg= "Options available";;
 
 (*---------------------*)
 (* Programme principal *)
-let () =
+let main () =
 
   (*Parse de la ligne de commande *)
   Arg.parse speclist anonymous_fun usage_msg;
   
   (* Chargement du traffic et de l'aeroport *)
-  let load = read ~n:(!line_to_read) file in
+  let load = Traffic.read ~n:(!line_to_read) file in
   let lfpg = read_airport "data/lfpg_map.txt" in
 
   (* Resolution des conflits *)
@@ -42,4 +42,4 @@ let () =
     Plot.start !debut_plot new_load lfpg !vitesse_plot;
   end;;
 
-
+main ();;
