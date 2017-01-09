@@ -1,66 +1,58 @@
-
 open Traffic;;
 
-(****************************************************************************)
+(***********************************************)
 
 let echanger = fun tab i j -> 
 	let memoire = tab.(i) in 
 	tab.(i) <- tab.(j);
 	tab.(j) <- memoire;;
-		
+(* Echange deux cases d'un tableau *)
 
 let list_to_tab = fun list ->
   Array.of_list list;;
+(* Transforme une liste en tableau *)
 
-let impr = fun tab f ->
+let impr = fun tab ->
   let size = Array.length tab in
+  Printf.printf "liste des vols : \n";
   for i = 0 to (size-1) do
     let flight = tab.(i) in
-    Printf.printf "%s\n" (f flight) done;;
+    let size = if (getSize flight) = L then "L" else if  (getSize flight) = M then "M" else "H" in
+    Printf.printf "Callsign : %s  Runway : %s T_début : %d T_eff : %d T_rwy : %d Size : %s\n" (get_callsign flight) (get_runway flight) (get_t_debut flight) (get_t_eff flight) (get_t_rwy flight) size;
+  done;;
+(* Affiche la caractéristique de flight demandée (f) *)
 
 let impr2 tab = 
   let size = Array.length tab in
   for i = 0 to (size-1) do
     let flight = tab.(i) in
-    Printf.printf "%s : t_eff=%d t_rwy=%d\n" (getCallsign flight) (get_t_eff flight) (get_t_rwy flight) done;;
+    Printf.printf "%s : t_eff=%d t_rwy=%d t_debut=%d\n" (getCallsign flight) (get_t_eff flight) (get_t_rwy flight)(get_t_debut flight) done;;
 
-let cmp_tmin = fun v1 v2 ->
+let cmp_t_rwy = fun v1 v2 ->
   compare (get_t_rwy v1) (get_t_rwy v2);;
+(* Compare deux vols par leur heure minimum d'entrée ou de sortie de la piste*)
 
-  
-let load () = read "data/lfpg_flights.txt";;
-(* Charge la liste des vols du fichier _file (global) *)
-  
-
-let tableau = list_to_tab (load ());;
-(*passe la liste des vols en tableau *)
+let cmp_t_eff = fun v1 v2 ->
+  compare (get_t_eff v1) (get_t_eff v2);;
+(* Compare deux vols par leur heure de depart ou arrivée effective*)
 
 let list_runway = fun tab ->
-  let acc26L = ref [] in
+  let accARR = ref [] in
   let acc26R = ref [] in
   let acc27L = ref [] in
-  let acc27R = ref [] in
   for i=0 to ((Array.length tab)-1) do
     match (get_runway tab.(i)) with
-	"26L" -> acc26L := tab.(i)::(!acc26L)
       |"26R" -> acc26R := tab.(i)::(!acc26R)
       |"27L" -> acc27L := tab.(i)::(!acc27L)
-      |"27R" -> acc27R := tab.(i)::(!acc27R)
-      |_ -> ();
+      |_ -> accARR := tab.(i)::(!accARR);
   done;
-  let res = [| !acc26L; !acc26R; !acc27L; !acc27R |] in
+  let res = [| !acc26R; !acc27L; !accARR |] in
   res;;
-
-let tri = list_runway tableau;;
-let rwy26L = Array.sort cmp_tmin (list_to_tab tri.(0));;
-let rwy26R = Array.sort cmp_tmin (list_to_tab tri.(1));;
-let rwy27L = Array.sort cmp_tmin (list_to_tab tri.(2));;
-let rwy27R = Array.sort cmp_tmin (list_to_tab tri.(3));;
+(* Crée 3 listes d'avions correspondant chacune soit au piste de DEP soit aux ARR *)
 
 
-let sequence_opti = fun retard i tab ->
+let sequence_opti = fun retard i n tab ->
   let borne = ref max_int in
-  let n =  Array.length tab in
   let solution = ref (Array.copy tab) in
   let rec sequence_rec = fun retard i ->
     if i < n
@@ -98,26 +90,111 @@ let sequence_opti = fun retard i tab ->
         solution := Array.copy tab;
       end;
   in sequence_rec retard i;
-  !solution;;
+  (!solution, !borne);;
+(* Calcul de séquencement optimal par l'algorithme de Branch & Bound *)
 
-
-let tableau_sub = Array.sub tableau 0 8;;
-let solution = sequence_opti 0 0 tableau_sub;;
-impr2 solution;;
 
 let sequence_fifo = fun tab ->
-  for i = 0 to Array.length tab -1 do
+  let retard = ref 0 in
+  for i = 0 to (Array.length tab-1) do
     if i = 0 then 
-      tab.(i) <- change_t_eff tab.(i) (get_t_rwy tab.(i));
-    else 
-      tab.(i) <- change_t_eff tab.(i) (max (get_t_rwy tab(i)) (get_t_rwy tab.(i-1) + separation tab.(i-1) tab.(i))
-   done;
-   tab;;
+      tab.(i) <- change_t_eff tab.(i) (get_t_rwy tab.(i))
+    else
+      begin
+	tab.(i) <- change_t_eff tab.(i) (max (get_t_rwy tab.(i)) (get_t_eff tab.(i-1) + separation tab.(i-1) tab.(i)));
+	retard := !retard + (get_t_eff tab.(i)) - (get_t_rwy tab.(i));
+      end;
+  done;
+  (tab, !retard);;
+(* Calcul de séquencement First In First Out*) 
 
-let sequence_rwy = fun tab n ->
-  let tab_sub = Array.make n 0 in
-  let reste = (Array.length tab) mod n in
-  let quotient = (Array.length tab) / n in
-  for i=0 to quotient do
-    for j 
+let sequence_opti_slot = fun tableau n ->
+  let reste = (Array.length tableau) mod n in 
+  let quotient = (Array.length tableau) / n in
+  let retard_tot = ref 0 in
+  for i=0 to (quotient-1) do
+    let init = if i = 0 then 0 else (i*n)-1 in
+    let (sol, retard) = sequence_opti 0 init (((i+1)*n)-1) tableau in
+    Array.blit sol init tableau init n;
+    retard_tot := !retard_tot + retard;
+  done;
+  let init_rest = (quotient*n) in
+  let (sol_rest, retard) = sequence_opti 0 (init_rest-1) (init_rest + reste) tableau  in
+  Array.blit sol_rest init_rest tableau init_rest reste ;
+  retard_tot := !retard_tot + retard;
+  (tableau, !retard_tot);
+;;
+(*Calcul du sequencement sur des périodes de n avions *)
 
+let get_New_t_debut = fun tab ->
+  for i = 0 to Array.length tab - 1 do
+    let t_taxi= (get_t_rwy tab.(i) - get_t_debut tab.(i)) in
+    let new_tdebut = (get_t_debut tab.(i)) - (t_taxi) in
+    tab.(i) <- (change_t_debut tab.(i) new_tdebut);
+  done;;
+
+
+let load () = read "data/lfpg_flights.txt";;
+(* Charge la liste des vols du fichier _file (global) *)
+  
+let tableau = list_to_tab (load ());;
+(*Passe la liste des vols en tableau *)
+
+let tri = list_runway tableau;;
+let rwy26R = list_to_tab tri.(0);;
+let rwy27L = list_to_tab tri.(1);;
+let rwyARR = list_to_tab tri.(2);;
+
+Array.sort cmp_t_rwy rwy26R;;
+Array.sort cmp_t_rwy rwy27L;;
+(* On trie les 2 listes précedentes DEP par leur heure d'entrée sur la piste*)
+
+(*let seq_final = fun f tab27L tab26R tabARR ->
+  let (seq27L, retard27L) = f tab27L 10 in
+  Printf.printf "retard 27L : %d\n" retard27L;
+  get_New_t_debut seq27L;
+  
+  let (seq26R, retard26R) = f tab26R 10 in
+  Printf.printf "retard 26R : %d\n" retard26R;
+  get_New_t_debut seq26R;
+  
+  let tab_final = Array.append seq27L (Array.append seq26R tabARR) in
+  Array.sort cmp_t_eff tab_final;
+  let retard_seq = (retard26R+retard27L) in
+  Printf.printf "retard_seq total : %d\n" retard_seq;
+  Array.to_list tab_final;;  *)
+
+let seq_final_opti = fun () ->
+  let (seq27L, retard27L) = sequence_opti_slot rwy27L 10 in
+  Printf.printf "retard 27L opti : %d\n" retard27L;
+  get_New_t_debut seq27L;
+  
+  let (seq26R, retard26R) = sequence_opti_slot rwy26R 10 in
+  Printf.printf "retard 26R opti : %d\n" retard26R;
+  get_New_t_debut seq26R;
+  
+  let tab_final = Array.append seq27L (Array.append seq26R rwyARR) in
+  Array.sort cmp_t_eff tab_final;
+  let retard_seq = (retard26R+retard27L) in
+  Printf.printf "retard_seq total opti : %d\n" retard_seq;
+  Array.to_list tab_final;;  
+
+let seq_final_fifo = fun () ->
+  let (seq27L, retard27L) = sequence_fifo rwy27L in
+  Printf.printf "retard 27L fifo : %d\n" retard27L;
+  get_New_t_debut seq27L;
+  
+  let (seq26R, retard26R) = sequence_fifo rwy26R in
+  Printf.printf "retard 26R fifo : %d\n" retard26R;
+  get_New_t_debut seq26R;
+  
+  let tab_final = Array.append seq27L (Array.append seq26R rwyARR) in
+  Array.sort cmp_t_eff tab_final;
+  let retard_seq = (retard26R+retard27L) in
+  Printf.printf "retard_seq total fifo : %d\n" retard_seq;
+  Array.to_list tab_final;;  
+
+
+
+seq_final_fifo();;
+seq_final_opti();;

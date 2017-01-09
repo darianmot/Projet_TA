@@ -56,7 +56,7 @@ let newFlight typ callsign size parking runway t_debut t_rwy t_cfmu traj =
    runway = runway;
    t_debut = t_debut;
    t_rwy = t_rwy;
-   t_eff = 0;
+   t_eff = t_rwy;
    t_cfmu = t_cfmu;
    traj = traj};;
 (* Enregistre un nouveau vol *)
