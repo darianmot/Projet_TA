@@ -2,6 +2,7 @@ open Traffic;;
 
 (***********************************************)
 
+
 let echanger = fun tab i j -> 
 	let memoire = tab.(i) in 
 	tab.(i) <- tab.(j);
@@ -94,7 +95,7 @@ let sequence_opti = fun retard i n tab ->
 (* Calcul de séquencement optimal par l'algorithme de Branch & Bound *)
 
 
-let sequence_fifo = fun tab ->
+let sequence_fcfs = fun tab ->
   let retard = ref 0 in
   for i = 0 to (Array.length tab-1) do
     if i = 0 then 
@@ -106,7 +107,7 @@ let sequence_fifo = fun tab ->
       end;
   done;
   (tab, !retard);;
-(* Calcul de séquencement First In First Out*) 
+(* Calcul de séquencement First Come First Serve*) 
 
 let sequence_opti_slot = fun tableau n ->
   let reste = (Array.length tableau) mod n in 
@@ -166,11 +167,13 @@ Array.sort cmp_t_rwy rwy27L;;
 
 let seq_final_opti = fun () ->
   let (seq27L, retard27L) = sequence_opti_slot rwy27L 10 in
-  Printf.printf "retard 27L opti : %d\n" retard27L;
+  let taille27L = (Array.length seq27L) in
+  Printf.printf "retard 27L opti : %d taille : %d\n" retard27L taille27L;
   get_New_t_debut seq27L;
   
   let (seq26R, retard26R) = sequence_opti_slot rwy26R 10 in
-  Printf.printf "retard 26R opti : %d\n" retard26R;
+   let taille26R = (Array.length seq26R) in
+  Printf.printf "retard 26R opti : %d taille : %d\n" retard26R taille26R;
   get_New_t_debut seq26R;
   
   let tab_final = Array.append seq27L (Array.append seq26R rwyARR) in
@@ -179,22 +182,70 @@ let seq_final_opti = fun () ->
   Printf.printf "retard_seq total opti : %d\n" retard_seq;
   Array.to_list tab_final;;  
 
-let seq_final_fifo = fun () ->
-  let (seq27L, retard27L) = sequence_fifo rwy27L in
+let seq_final_fcfs = fun () ->
+  let (seq27L, retard27L) = sequence_fcfs rwy27L in
   Printf.printf "retard 27L fifo : %d\n" retard27L;
   get_New_t_debut seq27L;
   
-  let (seq26R, retard26R) = sequence_fifo rwy26R in
+  let (seq26R, retard26R) = sequence_fcfs rwy26R in
   Printf.printf "retard 26R fifo : %d\n" retard26R;
   get_New_t_debut seq26R;
   
   let tab_final = Array.append seq27L (Array.append seq26R rwyARR) in
   Array.sort cmp_t_eff tab_final;
   let retard_seq = (retard26R+retard27L) in
-  Printf.printf "retard_seq total fifo : %d\n" retard_seq;
+  Printf.printf "retard_seq total fcfs : %d\n" retard_seq;
   Array.to_list tab_final;;  
 
-
-
-seq_final_fifo();;
+let time_debut = (Sys.time());;
+Printf.printf "time debut : %f\n" time_debut;;
 seq_final_opti();;
+let time_mid = Sys.time();;
+Printf.printf "Temps opti : %f\n" (time_mid-.time_debut);;
+seq_final_fcfs();;
+Printf.printf "Temps fcfs : %f\n" (Sys.time()-.time_mid);;
+
+
+(***************************************************************
+
+let tri = list_runway tableau;;
+let rwy26R = list_to_tab tri.(0);;
+let rwy27L = list_to_tab tri.(1);;
+let rwyARR = list_to_tab tri.(2);;
+
+Array.sort cmp_t_rwy rwy26R;;
+Array.sort cmp_t_rwy rwy27L;;
+
+let fifo = fun () ->
+  let (seq27L, retard27L) = sequence_fcfs rwy27L in
+  Printf.printf "retard 27L fifo : %d\n" retard27L;
+  get_New_t_debut seq27L;
+  
+  let (seq26R, retard26R) = sequence_fcfs rwy26R in
+  Printf.printf "retard 26R fifo : %d\n" retard26R;
+  get_New_t_debut seq26R;
+  (seq26R, seq27L);;
+
+let seq_final_opti (r, l) =
+  let (seq27L, retard27L) = sequence_opti_slot l 10 in
+  let taille27L = (Array.length seq27L) in
+  Printf.printf "retard 27L opti : %d taille : %d\n" retard27L taille27L;
+  get_New_t_debut seq27L;
+  
+  let (seq26R, retard26R) = sequence_opti_slot r 10 in
+   let taille26R = (Array.length seq26R) in
+  Printf.printf "retard 26R opti : %d taille : %d\n" retard26R taille26R;
+  get_New_t_debut seq26R;
+  
+  let tab_final = Array.append seq27L (Array.append seq26R rwyARR) in
+  Array.sort cmp_t_eff tab_final;
+  let retard_seq = (retard26R+retard27L) in
+  Printf.printf "retard_seq total opti : %d\n" retard_seq;
+  Array.to_list tab_final;;
+
+let time_mid2 = Sys.time();;
+
+let fifo_tuple = fifo();;
+seq_final_opti fifo_tuple;;
+  
+Printf.printf "Temps fifo + opti : %f\n" (Sys.time()-.time_mid2);*)
