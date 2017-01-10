@@ -123,6 +123,19 @@ let change_t_eff flight t_eff =
    traj = getTraj flight};;
 (* Renvoie un copie de flight en changeant le temps effectif en t_eff *)
 
+let change_t_rwy flight t_rwy =
+  {typ = getTyp flight;
+   callsign = getCallsign flight;
+   size = getSize flight;
+   parking = getParking flight;
+   runway = getRunway flight;
+   t_debut = getT_debut flight;
+   t_rwy = t_rwy;
+   t_eff =get_t_eff flight;
+   t_cfmu = getT_cfmu flight;
+   traj = getTraj flight};;
+(* Renvoie un copie de flight en changeant le temps effectif en t_rwy *)
+
 let change_t_debut flight t_debut =
   {typ = getTyp flight;
    callsign = getCallsign flight;
@@ -191,7 +204,7 @@ let separation = fun f1 f2 -> (* calcul de la séparation de turbulence de silla
 
 let print_traj traj = 
   let print_pos pos =
-    Printf.printf "(%d,%d) " pos.x pos.y in
+    Printf.printf "%d,%d " pos.x pos.y in
   List.iter print_pos traj;;
 (* Printf d'une trajectoire *)
 

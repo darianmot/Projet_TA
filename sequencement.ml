@@ -1,5 +1,5 @@
 open Traffic;;
-
+let n_sequencement = 10;; (* Nombre d'avions à séquencer à la fois *)
 (***********************************************)
 
 
@@ -22,12 +22,6 @@ let impr = fun tab ->
     Printf.printf "Callsign : %s  Runway : %s T_début : %d T_eff : %d T_rwy : %d Size : %s\n" (get_callsign flight) (get_runway flight) (get_t_debut flight) (get_t_eff flight) (get_t_rwy flight) size;
   done;;
 (* Affiche la caractéristique de flight demandée (f) *)
-
-let impr2 tab = 
-  let size = Array.length tab in
-  for i = 0 to (size-1) do
-    let flight = tab.(i) in
-    Printf.printf "%s : t_eff=%d t_rwy=%d t_debut=%d\n" (getCallsign flight) (get_t_eff flight) (get_t_rwy flight)(get_t_debut flight) done;;
 
 let cmp_t_rwy = fun v1 v2 ->
   compare (get_t_rwy v1) (get_t_rwy v2);;
@@ -119,8 +113,8 @@ let sequence_opti_slot = fun tableau n ->
     Array.blit sol init tableau init n;
     retard_tot := !retard_tot + retard;
   done;
-  let init_rest = (quotient*n) in
-  let (sol_rest, retard) = sequence_opti 0 (init_rest-1) (init_rest + reste) tableau  in
+  let init_rest =  (quotient*n) in
+  let (sol_rest, retard) = sequence_opti 0 (max (init_rest-1) 0) (init_rest + reste) tableau  in
   Array.blit sol_rest init_rest tableau init_rest reste ;
   retard_tot := !retard_tot + retard;
   (tableau, !retard_tot);
@@ -130,48 +124,31 @@ let sequence_opti_slot = fun tableau n ->
 let get_New_t_debut = fun tab ->
   for i = 0 to Array.length tab - 1 do
     let t_taxi= (get_t_rwy tab.(i) - get_t_debut tab.(i)) in
-    let new_tdebut = (get_t_debut tab.(i)) - (t_taxi) in
+    let new_tdebut = (get_t_eff tab.(i)) - (t_taxi) in
     tab.(i) <- (change_t_debut tab.(i) new_tdebut);
+    tab.(i) <- change_t_rwy tab.(i) (get_t_eff tab.(i));
   done;;
 
-
-let load () = read "data/lfpg_flights.txt";;
-(* Charge la liste des vols du fichier _file (global) *)
   
-let tableau = list_to_tab (load ());;
-(*Passe la liste des vols en tableau *)
 
-let tri = list_runway tableau;;
-let rwy26R = list_to_tab tri.(0);;
-let rwy27L = list_to_tab tri.(1);;
-let rwyARR = list_to_tab tri.(2);;
+let runways traffic =
+  let tab = list_to_tab traffic in
+  let tri = list_runway tab in
+  let rwy26R = list_to_tab tri.(0) in
+  let rwy27L = list_to_tab tri.(1) in
+  let rwyARR = list_to_tab tri.(2) in
+  Array.sort cmp_t_rwy rwy26R;
+  Array.sort cmp_t_rwy rwy27L;
+  (rwy26R, rwy27L, rwyARR);;(* On trie les 2 listes précedentes DEP par leur heure d'entrée sur la piste*)
+(* Renvoie les tableaux des pistes d'un trafic, trie par t_rwy pour les DEP *)
 
-Array.sort cmp_t_rwy rwy26R;;
-Array.sort cmp_t_rwy rwy27L;;
-(* On trie les 2 listes précedentes DEP par leur heure d'entrée sur la piste*)
-
-(*let seq_final = fun f tab27L tab26R tabARR ->
-  let (seq27L, retard27L) = f tab27L 10 in
-  Printf.printf "retard 27L : %d\n" retard27L;
-  get_New_t_debut seq27L;
-  
-  let (seq26R, retard26R) = f tab26R 10 in
-  Printf.printf "retard 26R : %d\n" retard26R;
-  get_New_t_debut seq26R;
-  
-  let tab_final = Array.append seq27L (Array.append seq26R tabARR) in
-  Array.sort cmp_t_eff tab_final;
-  let retard_seq = (retard26R+retard27L) in
-  Printf.printf "retard_seq total : %d\n" retard_seq;
-  Array.to_list tab_final;;  *)
-
-let seq_final_opti = fun () ->
-  let (seq27L, retard27L) = sequence_opti_slot rwy27L 10 in
+let seq_final_opti = fun load ->
+  let (rwy27L, rwy26R, rwyARR) = runways load in
+  let (seq27L, retard27L) = sequence_opti_slot rwy27L n_sequencement in
   let taille27L = (Array.length seq27L) in
   Printf.printf "retard 27L opti : %d taille : %d\n" retard27L taille27L;
   get_New_t_debut seq27L;
-  
-  let (seq26R, retard26R) = sequence_opti_slot rwy26R 10 in
+  let (seq26R, retard26R) = sequence_opti_slot rwy26R n_sequencement in
    let taille26R = (Array.length seq26R) in
   Printf.printf "retard 26R opti : %d taille : %d\n" retard26R taille26R;
   get_New_t_debut seq26R;
@@ -180,9 +157,10 @@ let seq_final_opti = fun () ->
   Array.sort cmp_t_eff tab_final;
   let retard_seq = (retard26R+retard27L) in
   Printf.printf "retard_seq total opti : %d\n" retard_seq;
-  Array.to_list tab_final;;  
+  (Array.to_list tab_final, retard_seq);;  
 
-let seq_final_fcfs = fun () ->
+let seq_final_fcfs = fun load ->
+  let (rwy27L, rwy26R, rwyARR) = runways load in
   let (seq27L, retard27L) = sequence_fcfs rwy27L in
   Printf.printf "retard 27L fifo : %d\n" retard27L;
   get_New_t_debut seq27L;
@@ -195,57 +173,4 @@ let seq_final_fcfs = fun () ->
   Array.sort cmp_t_eff tab_final;
   let retard_seq = (retard26R+retard27L) in
   Printf.printf "retard_seq total fcfs : %d\n" retard_seq;
-  Array.to_list tab_final;;  
-
-let time_debut = (Sys.time());;
-Printf.printf "time debut : %f\n" time_debut;;
-seq_final_opti();;
-let time_mid = Sys.time();;
-Printf.printf "Temps opti : %f\n" (time_mid-.time_debut);;
-seq_final_fcfs();;
-Printf.printf "Temps fcfs : %f\n" (Sys.time()-.time_mid);;
-
-
-(***************************************************************
-
-let tri = list_runway tableau;;
-let rwy26R = list_to_tab tri.(0);;
-let rwy27L = list_to_tab tri.(1);;
-let rwyARR = list_to_tab tri.(2);;
-
-Array.sort cmp_t_rwy rwy26R;;
-Array.sort cmp_t_rwy rwy27L;;
-
-let fifo = fun () ->
-  let (seq27L, retard27L) = sequence_fcfs rwy27L in
-  Printf.printf "retard 27L fifo : %d\n" retard27L;
-  get_New_t_debut seq27L;
-  
-  let (seq26R, retard26R) = sequence_fcfs rwy26R in
-  Printf.printf "retard 26R fifo : %d\n" retard26R;
-  get_New_t_debut seq26R;
-  (seq26R, seq27L);;
-
-let seq_final_opti (r, l) =
-  let (seq27L, retard27L) = sequence_opti_slot l 10 in
-  let taille27L = (Array.length seq27L) in
-  Printf.printf "retard 27L opti : %d taille : %d\n" retard27L taille27L;
-  get_New_t_debut seq27L;
-  
-  let (seq26R, retard26R) = sequence_opti_slot r 10 in
-   let taille26R = (Array.length seq26R) in
-  Printf.printf "retard 26R opti : %d taille : %d\n" retard26R taille26R;
-  get_New_t_debut seq26R;
-  
-  let tab_final = Array.append seq27L (Array.append seq26R rwyARR) in
-  Array.sort cmp_t_eff tab_final;
-  let retard_seq = (retard26R+retard27L) in
-  Printf.printf "retard_seq total opti : %d\n" retard_seq;
-  Array.to_list tab_final;;
-
-let time_mid2 = Sys.time();;
-
-let fifo_tuple = fifo();;
-seq_final_opti fifo_tuple;;
-  
-Printf.printf "Temps fifo + opti : %f\n" (Sys.time()-.time_mid2);*)
+   (Array.to_list tab_final, retard_seq);;  
