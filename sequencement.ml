@@ -145,32 +145,24 @@ let runways traffic =
 let seq_final_opti = fun load ->
   let (rwy27L, rwy26R, rwyARR) = runways load in
   let (seq27L, retard27L) = sequence_opti_slot rwy27L n_sequencement in
-  let taille27L = (Array.length seq27L) in
-  Printf.printf "retard 27L opti : %d taille : %d\n" retard27L taille27L;
   get_New_t_debut seq27L;
   let (seq26R, retard26R) = sequence_opti_slot rwy26R n_sequencement in
-   let taille26R = (Array.length seq26R) in
-  Printf.printf "retard 26R opti : %d taille : %d\n" retard26R taille26R;
   get_New_t_debut seq26R;
   
   let tab_final = Array.append seq27L (Array.append seq26R rwyARR) in
   Array.sort cmp_t_eff tab_final;
   let retard_seq = (retard26R+retard27L) in
-  Printf.printf "retard_seq total opti : %d\n" retard_seq;
   (Array.to_list tab_final, retard_seq);;  
 
 let seq_final_fcfs = fun load ->
   let (rwy27L, rwy26R, rwyARR) = runways load in
   let (seq27L, retard27L) = sequence_fcfs rwy27L in
-  Printf.printf "retard 27L fifo : %d\n" retard27L;
   get_New_t_debut seq27L;
   
   let (seq26R, retard26R) = sequence_fcfs rwy26R in
-  Printf.printf "retard 26R fifo : %d\n" retard26R;
   get_New_t_debut seq26R;
   
   let tab_final = Array.append seq27L (Array.append seq26R rwyARR) in
   Array.sort cmp_t_eff tab_final;
   let retard_seq = (retard26R+retard27L) in
-  Printf.printf "retard_seq total fcfs : %d\n" retard_seq;
    (Array.to_list tab_final, retard_seq);;  

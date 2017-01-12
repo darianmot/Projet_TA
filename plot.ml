@@ -17,6 +17,10 @@ let text_color = black;;
 let flight_size = Solve.min_dist;;
 (* Taille d'un plot (en metre) *)
 
+let size_list = [("Light", light_color); ("Medium", medium_color);
+                ("Heavy", heavy_color) ];;
+(* Liste du nom des categories d'avions associees a leurs couleurs *)
+
 
 let pos_to_pix pos = 
   let win_x =  size_x () in
@@ -90,11 +94,31 @@ let wait sec =
   done;;
 (* Permet de mettre en pause le programme un nombre flottant de seconde *)
 
+let rec plot_cat x_pos y_pos size_list =
+  match size_list with
+  |[] -> ()
+  |(name, color)::q ->
+     begin
+       moveto x_pos y_pos;
+       set_color color;
+       draw_string name;
+       set_color text_color;
+       let (x, y) = text_size name in
+       moveto (x_pos + x) y_pos;
+       if q != [] then
+         let sep = ", " in
+         let (x_sep, y_sep) = text_size sep in
+         draw_string sep;
+         plot_cat (x_pos + x + x_sep) y_pos q;
+     end;;
+(* Plot la legende des categories en position x_pos, y_pos *)       
+
 let plot_background airport sizex sizey =
-  let indication = "p = pause; q= quitter " in
+  let indication = "p = pause; q = quitter; size : " in
   let (size_text_x, size_text_y) = text_size indication in
-  moveto 1 (sizey  - size_text_y);
+  moveto 1 (sizey - size_text_y);
   draw_string indication;
+  plot_cat (1 + size_text_x) (sizey - size_text_y) size_list;
   plot_airport airport;
   get_image 0 0 sizex sizey;;
 (* Dessine l'aeroport ET renvoie l'image associee *)
@@ -105,7 +129,7 @@ let start t_init flight_l airport vitesse_lecture=
   let sizey = ref (size_y ()) in
   let background = ref (plot_background airport !sizex !sizey) in
   let t = ref t_init in
-  let auto = ref true in
+  let auto = ref false in
   try
     while true do
       if !sizex != size_x () ||  !sizey != size_y () then 
